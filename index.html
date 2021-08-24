@@ -1,0 +1,227 @@
+<head>
+    <title>Luke Chen Shui</title>
+    <link href="./assets/flexboxgrid.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans|Ubuntu&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Bebas+Neue|Permanent+Marker&display=swap" rel="stylesheet">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+         html {
+            overflow-y: scroll;
+        }
+
+        body {
+            font-size: 16px;
+            margin: 0px;
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        #heading,
+        #heading * {
+            margin: 0px auto;
+            text-align: center;
+            font-weight: 900;
+            color: black;
+            text-decoration: none;
+        }
+
+        img.cover-image {
+            height: 50vh;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        video.cover-video {
+            width: 100%;
+            object-fit: cover;
+            height: 50vh;
+        }
+
+        p, a {
+            font-family: 'Ubuntu', sans-serif;
+            font-size: 1rem;
+            display: block;
+            color: black;
+        }
+
+        body {
+            background-color: white;
+            color: #222;
+        }
+
+        #blog-index h1 {
+            font-family: 'Permanent Marker', cursive;
+            font-size: 50px;
+        }
+
+        #blog-index h1, #blog-index a {
+            text-align: center;
+            display: block;
+        }
+
+        #blog-index a {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 30px;
+        }
+
+        .article {
+            padding: 100px;
+            padding-top: 25px;
+        }
+
+        .col-md-6 {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+
+        #profile-picture {
+            position: absolute;
+            top: 0px;
+            left: 50%;
+            height: 100px;
+            width: auto;
+            border-radius: 100%;
+            margin: auto;
+            transform: translate(-50%, 0%);
+        }
+
+        #heading-box {
+            position: absolute;
+            background-color: white;
+            top: 25%;
+            left: 35%;
+            margin: 0px auto;
+            bottom: 25%;
+            right: 35%;
+            
+        }
+        #heading-box * {
+            text-align: center;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        @media(max-width:768px) {
+            #heading-box {
+                left: 5%;
+                right: 5%;
+            }
+        }
+
+        @media(max-height: 500px) {
+            #heading-box {
+                bottom: 5%;
+            }
+        }
+
+        .cta-grid {
+            padding: 10px;
+        }
+
+        .cta-grid.left *{
+            text-align: left;
+        }
+
+        .cta-grid.right *{
+            text-align: right;
+        }
+
+        .container {
+            width: 100%;
+        }
+    </style>
+    <script>
+        function toggleAudio(){
+            if($('.cover-video').prop('muted')){
+                $('.cover-video').prop('muted', false);
+            }
+            else{
+                $('.cover-video').prop('muted', true);
+            }
+        }
+    </script>
+
+</head>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@0.8.2"></script>
+
+<body>
+    <!-- <h1 id="heading"><a href="/">LUKE CHEN SHUI</a></h1> -->
+    <div class="row">
+            <div class="col-xs-6 col-md-6">
+                <video class="cover-video" id="bg-video-1" muted autoplay loop>
+                </video>
+            </div>
+            <div class="col-xs-6 col-md-6">
+                <img class="cover-image" src="./assets/2019-10-26-cupcake.jpg" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-6 col-md-6">
+                <img class="cover-image" src="./assets/2019-10-26-flowers.jpg" />
+            </div>
+            <div class="col-xs-6 col-md-6">
+                <video class="cover-video" id="bg-video-2" muted autoplay loop>
+                    
+                </video>
+                
+            </div>
+        </div>
+        <img id="profile-picture" src="./assets/me.jpg"/>
+        <div id="heading-box">
+            <h1>Hi!</h1>
+            <h2>I'm Luke Chen Shui</h2>
+            <div class="container">
+                <div class="row">
+                    <div class="cta-grid left col-xs-6">
+                        <a href="./blog/index.html" class="left">Check out my blog!</a>
+                    </div>
+                    <div class="cta-grid right col-xs-6">
+                        <a href="./gallery/index.html" class="right">Check out my gallery!</a>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <a href="./projects/index.html">Take a look at my projects :)</a>
+            <p onclick="toggleAudio()">Toggle Background Audio</p>
+        </div>
+</body>
+<script>
+    (function(){
+        // Replace with your asset's playback ID
+        var backgroundVideos = [
+            {
+                muxUrl: "https://stream.mux.com/y1iQ8sgKnP7E46I1jlhg01SWvWQOarF4P.m3u8",
+                elementId: "bg-video-1"
+            },
+            {
+                muxUrl: "https://stream.mux.com/IvspGT000267qXPow500zG502OUPxi2KuRSG.m3u8",
+                elementId: "bg-video-2"
+            }
+        ];
+        
+    
+        // HLS.js-specific setup code
+        if (Hls.isSupported()) {
+            for(var counter = 0; counter < backgroundVideos.length; counter++) {
+                var bgVideo = backgroundVideos[counter];
+                var url = bgVideo.muxUrl ;
+                var video = document.getElementById(bgVideo.elementId);
+                var hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+            }
+          
+        }
+      })();
+    </script>
+
+

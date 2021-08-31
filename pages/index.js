@@ -1,11 +1,7 @@
 import Head from 'next/head'
-import Image from 'next/image'
-import firstImage from '../assets/img/2019-10-26-cupcake.jpg';
-import secondImage from '../assets/img/2019-10-26-flowers.jpg';
-import profileImage from '../assets/img/me.jpg';
 import gridStyles from '../styles/flexboxgrid.module.css';
 import styles from '../styles/Home.module.css';
-
+import Img from 'react-optimized-image';
 
 import Hls from 'hls.js';
 import { Component } from 'react';
@@ -25,12 +21,12 @@ export default class Home extends Component {
             </video>
           </div>
           <div className={cx(styles['col-md-6'], gridStyles['col-xs-6'], gridStyles['col-md-6'])}>
-            <img className={styles.coverImage} src={firstImage.src} />
+            <Img className={styles.coverImage} src={require('../assets/img/2019-10-26-cupcake.jpg')} />
           </div>
         </div>
         <div className={gridStyles.row}>
           <div className={cx(styles['col-md-6'], gridStyles['col-xs-6'], gridStyles['col-md-6'])}>
-            <img className={styles.coverImage} src={secondImage.src} />
+            <Img className={styles.coverImage} src={require('../assets/img/2019-10-26-flowers.jpg')} />
           </div>
           <div className={cx(styles['col-md-6'], gridStyles['col-xs-6'], gridStyles['col-md-6'])}>
             <video className={styles.coverVideo} id="bg-video-2" muted={this.state.muted} autoPlay loop>
@@ -39,10 +35,10 @@ export default class Home extends Component {
 
           </div>
         </div>
-        <img className={styles['profile-picture']} src={profileImage.src} />
+        <Img className={styles['profile-picture']} src={require('../assets/img/me.jpeg')} />
         <div className={styles['heading-box']}>
           <h1>Hi!</h1>
-          <h2>I'm Luke Chen Shui</h2>
+          <h2>I&apos;m Luke Chen Shui</h2>
           <p onClick={this.toggleAudio}>Toggle Background Audio</p>
         </div>
       </>

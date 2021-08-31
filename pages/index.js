@@ -39,7 +39,8 @@ export default class Home extends Component {
         <div className={styles['heading-box']}>
           <h1>Hi!</h1>
           <h2>I&apos;m Luke Chen Shui</h2>
-          <h3>There isn&apos;t much here yet, but feel free to watch my gameplay videos in the background for now :)</h3>
+          <h3>There isn&apos;t much here yet </h3> 
+          <h3>Feel free to watch my <br/> gameplay videos in the<br/> background :) </h3>
           <p onClick={this.toggleAudio}>Toggle Background Audio</p>
         </div>
       </>

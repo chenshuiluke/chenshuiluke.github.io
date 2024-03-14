@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Homemade+Apple&family=Madimi+One&family=Protest+Riot&family=Swanky+and+Moo+Moo&display=swap');
+
+body {
+    background-color: #253667
+}
+
+.madimi-one-regular {
+    font-family: "Madimi One", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+.nav-link {
+    font-family: "Madimi One";
+    font-weight: 400;
+    font-style: normal;
+    color: #fdd2c2;
+    font-size: 2rem;
+}
+
+.space-section {
+    background-color: #031424;
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.animated {
+    transform: translateY(-10);
+}

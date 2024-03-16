@@ -2,6 +2,7 @@
 import { useAnimate } from "framer-motion";
 import Image from "next/image";
 import { useEffect } from "react";
+
 const Cloud = () => {
   const [scope, animate] = useAnimate();
   useEffect(() => {
@@ -13,6 +14,7 @@ const Cloud = () => {
         // delay,
         duration: 2,
         repeat: Infinity,
+
         // repeatDelay: 0.2,
         repeatType: "reverse",
       }
@@ -23,8 +25,8 @@ const Cloud = () => {
       className="animated"
       ref={scope}
       src="/images/cloud.png"
-      width={500}
-      height={500}
+      width={100}
+      height={100}
       alt="Image of cloud"
     />
   );

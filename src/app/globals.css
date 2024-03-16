@@ -24,6 +24,8 @@ body {
     background-color: #031424;
     border-radius: 50px;
     overflow: hidden;
+    min-height: 70vh;
+    position: relative;
 }
 
 .animated {
@@ -31,10 +33,34 @@ body {
 }
 
 .star {
-    background-color: white;
     width: 1px;
     height: 1px;
     margin: 20px;
     opacity: 0.2;
     position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.star.white {
+    background-color: white;
+}
+
+.star.yellow {
+    background-color: orange;
+}
+
+.star-container {
+    min-height: 100vw;
+    height: 100vw;
+    width: 100%;
+    min-width: 100%;
+    position: absolute;
+    transform-origin: 50% 50%;
+}
+.corner-border {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    transform: rotate(90deg)
 }

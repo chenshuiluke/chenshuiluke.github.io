@@ -29,3 +29,12 @@ body {
 .animated {
     transform: translateY(-10);
 }
+
+.star {
+    background-color: white;
+    width: 1px;
+    height: 1px;
+    margin: 20px;
+    opacity: 0.2;
+    position: absolute;
+}

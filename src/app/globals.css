@@ -24,8 +24,20 @@ body {
     background-color: #031424;
     border-radius: 50px;
     overflow: hidden;
+    min-height: 70vh;
+    position: relative;
+    background-image: url('/images/stars.png');
+    background-size: initial;
+    background-repeat: repeat;
 }
 
 .animated {
     transform: translateY(-10);
+}
+
+.corner-border {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    transform: rotate(90deg)
 }

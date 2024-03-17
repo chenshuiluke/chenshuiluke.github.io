@@ -8,7 +8,7 @@ const Star = ({ left, top }: { left: number; top: number }) => {
   const isWhite = Math.random() < 0.5;
   useEffect(() => {
     const maxScale = Math.floor(Math.random() * 10) + 1;
-    const duration = Math.random() * (2 - 0.2) + 0.2;
+    const duration = Math.random() * (1 - 0.2) + 0.2;
     animate(
       scope.current,
       { scaleX: maxScale, scaleY: maxScale, opacity: 1 },

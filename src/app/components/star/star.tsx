@@ -1,35 +1,32 @@
-import { useAnimate, useInView } from "framer-motion";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { useRef } from "react";
+import { StarProps } from "../../types";
 
-const Star = ({ left, top }: { left: number; top: number }) => {
-  const [scope, animate] = useAnimate();
-  const isInView = useInView(scope);
-  const isWhite = Math.random() < 0.5;
-  useEffect(() => {
-    const maxScale = Math.floor(Math.random() * 10) + 1;
-    const duration = Math.random() * (1 - 0.2) + 0.2;
-    animate(
-      scope.current,
-      { scaleX: maxScale, scaleY: maxScale, opacity: 1 },
-      {
-        // delay,
-        duration,
-        repeat: Infinity,
-        // repeatDelay: 0.2,
-        repeatType: "reverse",
-      }
-    );
-  });
+const Star: React.FC<StarProps> = ({ left, top, delay, isWhite }) => {
+  const maxScale = useRef(Math.floor(Math.random() * 10) + 10);
+  const duration = useRef(Math.random() * (1 - 0.2) + 0.2);
+
   return (
-    <div
-      ref={scope}
+    <motion.div
       style={{
         left: `${left}%`,
         top: `${top}%`,
       }}
       className={`star ${isWhite ? "white" : "yellow"}`}
-    ></div>
+      initial={{ opacity: 0 }}
+      animate={{
+        scaleX: [1, maxScale.current, 1],
+        scaleY: [1, maxScale.current, 1],
+        opacity: [0, 1, 0],
+      }}
+      transition={{
+        duration: duration.current * 2,
+        repeat: Infinity,
+        delay: delay,
+        ease: "easeInOut",
+      }}
+    />
   );
 };
+
 export default Star;

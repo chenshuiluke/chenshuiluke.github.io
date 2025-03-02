@@ -1,67 +1,75 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Homemade+Apple&family=Madimi+One&family=Protest+Riot&family=Swanky+and+Moo+Moo&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Homemade+Apple&family=Madimi+One&family=Protest+Riot&family=Swanky+and+Moo+Moo&display=swap");
 
 body {
-    background-color: #253667
+  background-color: #253667;
 }
 
 .madimi-one-regular {
-    font-family: "Madimi One", sans-serif;
-    font-weight: 400;
-    font-style: normal;
-  }
+  font-family: "Madimi One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
 .nav-link {
-    font-family: "Madimi One";
-    font-weight: 400;
-    font-style: normal;
-    color: #fdd2c2;
-    font-size: 2rem;
+  font-family: "Madimi One";
+  font-weight: 400;
+  font-style: normal;
+  color: #fdd2c2;
+  font-size: 2rem;
 }
 
 .space-section {
-    background-color: #031424;
-    border-radius: 50px;
-    overflow: hidden;
-    min-height: 70vh;
-    position: relative;
+  background-color: #031424;
+  border-radius: 5px;
+  overflow: hidden;
+  min-height: 100vh;
+  position: relative;
 }
 
 .animated {
-    transform: translateY(-10);
+  transform: translateY(-10);
 }
 
 .star {
-    width: 1px;
-    height: 1px;
-    margin: 20px;
-    opacity: 0.2;
-    position: absolute;
-    top: 0px;
-    left: 0px;
+  width: 1px;
+  height: 1px;
+  margin: 20px;
+  opacity: 0.2;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  clip-path: polygon(
+    50% 0%,
+    65% 35%,
+    100% 50%,
+    65% 65%,
+    50% 100%,
+    35% 65%,
+    0% 50%,
+    35% 35%
+  );
 }
 
 .star.white {
-    background-color: #fe9886;
+  background-color: #fe9886;
 }
 
 .star.yellow {
-    background-color: orange;
+  background-color: orange;
 }
 
 .star-container {
-    min-height: 100vw;
-    height: 100vw;
-    width: 100%;
-    min-width: 100%;
-    position: absolute;
-    transform-origin: 50% 50%;
+  width: 2000px;
+  height: 2000px;
+  position: absolute;
+  left: calc(50vw - 1000px);
+  top: calc(50vh - 1000px);
 }
 .corner-border {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    transform: rotate(90deg)
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  transform: rotate(90deg);
 }
-

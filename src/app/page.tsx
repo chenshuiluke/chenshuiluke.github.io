@@ -6,9 +6,8 @@ import PlanetContainer from "./components/planet/planet_container";
 export default function Home() {
   return (
     <main className="">
-      <Nav />
-
-      <div className="space-section rounded-lg mx-20">
+      <div className="space-section">
+        <Nav />
         <StarContainer />
         <PlanetContainer />
         <Cloud />

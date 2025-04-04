@@ -4,7 +4,7 @@ import { motion, useTime, useTransform } from "framer-motion";
 import Star from "./star";
 import { StarProps, StarData } from "../../types";
 
-const STAR_COUNT = 100; // Reduced from 200 for better performance
+const STAR_COUNT = 400; // Reduced from 200 for better performance
 
 const StarContainer: React.FC = () => {
   const time = useTime();

@@ -1,0 +1,70 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --space: #0d1826;
+  --cream: #f0e6d5;
+  --ol: #0b1420;
+  --warm: #e07a50;
+  --star: #eee8dc;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--space);
+  font-family: var(--font-nunito), "Nunito", sans-serif;
+}
+
+/* shared float / entry / dust keyframes */
+@keyframes objFloat {
+  from {
+    transform: translateY(0) rotate(var(--r0, 0deg));
+  }
+  to {
+    transform: translateY(var(--ty, -12px)) rotate(var(--r1, 5deg));
+  }
+}
+
+@keyframes fadeUpC {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sparkA {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes trailFade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+  }
+}

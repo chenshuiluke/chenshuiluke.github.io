@@ -1,28 +1,34 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.scss";
+import { Fredoka, Nunito } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const fredoka = Fredoka({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-fredoka",
+  display: "swap",
+});
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  variable: "--font-nunito",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Luke Chen Shui",
-  description: "Luke Chen Shui - Software Engineer",
+  description: "Full Stack Software Engineer",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-      <script
-  id="beacon-ai-loader"
-  src="https://dev-beacon-ai.vercel.app/api/widget/loader.js"
-  data-chatbot-id="556ac132-73e5-4140-9121-140d4b15a608"
-  data-api-key="8931772dd236204427d036302259c5d0b237756cbeb2b8e7400f8465d284ade9"
-></script>
+    <html lang="en" className={`${fredoka.variable} ${nunito.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,0 +1,80 @@
+.hero {
+  position: absolute;
+  top: clamp(36vh, 42vh, 47vh);
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 18;
+  white-space: nowrap;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--warm);
+  margin-bottom: 0.5rem;
+  animation: fadeUpC 0.7s 0.1s both;
+}
+
+.headline {
+  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-size: clamp(2.6rem, 4.8vw, 4.8rem);
+  color: var(--cream);
+  line-height: 1;
+  -webkit-text-stroke: 2px var(--ol);
+  paint-order: stroke fill;
+  animation: fadeUpC 0.7s 0.2s both;
+  margin-bottom: 0.5rem;
+}
+
+.ctaRow {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 0.9rem;
+  justify-content: center;
+  animation: fadeUpC 0.7s 0.35s both;
+}
+
+.btn {
+  font-family: var(--font-nunito), "Nunito", sans-serif;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  padding: 0.6rem 1.6rem;
+  border-radius: 100px;
+  border: 2.5px solid var(--ol);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.btn:active {
+  transform: translateY(2px) !important;
+}
+
+.primary {
+  background: var(--warm);
+  color: var(--ol);
+  box-shadow: 3px 4px 0 var(--ol);
+}
+
+.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 5px 7px 0 var(--ol);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--cream);
+  border-color: #2a4060;
+  box-shadow: 3px 4px 0 #182840;
+}
+
+.ghost:hover {
+  transform: translateY(-3px);
+  box-shadow: 5px 7px 0 #182840;
+  border-color: #4a6a8a;
+}

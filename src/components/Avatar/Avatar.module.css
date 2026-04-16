@@ -1,0 +1,25 @@
+.wrap {
+  position: absolute;
+  top: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(150px, 19vh, 220px);
+  z-index: 20;
+  filter: drop-shadow(0 8px 30px rgba(14, 28, 48, 0.8));
+  animation: avatarFloat 8s ease-in-out infinite alternate;
+}
+
+.wrap img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@keyframes avatarFloat {
+  from {
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    transform: translateX(-50%) translateY(-10px);
+  }
+}

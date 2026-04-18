@@ -1,0 +1,52 @@
+.fly {
+  position: absolute;
+  z-index: 14;
+  animation: rocketPath 22s 0.5s ease-in-out infinite;
+}
+
+@keyframes rocketPath {
+  0% {
+    transform: translate(-120px, 90vh) rotate(-38deg);
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  30% {
+    transform: translate(25vw, 52vh) rotate(-42deg);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(55vw, 28vh) rotate(-36deg);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(85vw, 10vh) rotate(-42deg);
+    opacity: 1;
+  }
+  95% {
+    opacity: 1;
+    transform: translate(110vw, -10vh) rotate(-40deg);
+  }
+  96% {
+    opacity: 0;
+    transform: translate(110vw, -10vh) rotate(-40deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-120px, 90vh) rotate(-38deg);
+  }
+}
+
+.flame {
+  animation: flameFlic 0.15s ease-in-out infinite alternate;
+}
+
+@keyframes flameFlic {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 1;
+  }
+}

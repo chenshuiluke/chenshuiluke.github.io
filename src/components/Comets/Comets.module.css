@@ -1,0 +1,107 @@
+.comet {
+  position: absolute;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.c1 {
+  top: 22%;
+  left: -20%;
+  animation: cm1 13s 1s linear infinite;
+}
+
+.c2 {
+  top: 65%;
+  left: -20%;
+  animation: cm2 17s 6s linear infinite;
+}
+
+.c3 {
+  top: 38%;
+  right: -20%;
+  animation: cm3 15s 9s linear infinite;
+}
+
+.c4 {
+  top: 80%;
+  right: -20%;
+  animation: cm4 11s 3s linear infinite;
+}
+
+@keyframes cm1 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  6% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(140vw, -40vh);
+  }
+}
+
+@keyframes cm2 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  5% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(130vw, -26vh);
+  }
+}
+
+@keyframes cm3 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  6% {
+    opacity: 1;
+  }
+  87% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-135vw, -24vh);
+  }
+}
+
+@keyframes cm4 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  7% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-120vw, 14vh);
+  }
+}
+
+/* world-space particle rendered by Comets.tsx; positioned:fixed so it lingers after the comet head moves on */
+.trailP {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 8;
+}

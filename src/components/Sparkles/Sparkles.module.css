@@ -1,0 +1,6 @@
+.spark {
+  position: absolute;
+  z-index: 7;
+  animation: sparkA var(--sd, 3s) var(--del, 0s) ease-in-out infinite;
+  transform-origin: center;
+}

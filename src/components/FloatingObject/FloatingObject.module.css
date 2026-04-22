@@ -1,0 +1,6 @@
+.obj {
+  position: absolute;
+  z-index: 11;
+  animation: objFloat var(--dur, 8s) var(--del, 0s) ease-in-out infinite
+    alternate;
+}

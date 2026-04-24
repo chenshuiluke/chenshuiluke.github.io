@@ -1,0 +1,54 @@
+.card {
+  position: relative;
+  padding: 1.4rem 1.6rem;
+  border-radius: 18px;
+  background: rgba(20, 32, 50, 0.78);
+  border: 1px solid rgba(240, 230, 213, 0.12);
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  backdrop-filter: blur(8px);
+  color: var(--cream);
+  will-change: transform, opacity;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+
+.dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--warm), #b04a2c);
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(224, 122, 80, 0.5);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.name {
+  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-size: 0.95rem;
+  color: var(--cream);
+}
+
+.role {
+  font-size: 0.72rem;
+  color: var(--cream);
+  opacity: 0.55;
+  letter-spacing: 0.04em;
+}
+
+.quote {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0.88;
+}

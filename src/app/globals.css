@@ -16,10 +16,12 @@
 
 html,
 body {
-  height: 100%;
-  overflow: hidden;
   background: var(--space);
   font-family: var(--font-nunito), "Nunito", sans-serif;
+}
+
+body {
+  overflow-x: clip;
 }
 
 /* shared float / entry / dust keyframes */

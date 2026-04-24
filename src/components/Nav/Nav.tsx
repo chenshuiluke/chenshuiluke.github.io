@@ -5,9 +5,9 @@ export function Nav() {
     <nav className={styles.nav}>
       <span className={styles.logo}>Luke Chen Shui</span>
       <div className={styles.links}>
-        <a href="#">Work</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
+        <a href="#work">Work</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
       </div>
     </nav>
   );

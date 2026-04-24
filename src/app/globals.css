@@ -43,18 +43,6 @@ body {
   }
 }
 
-@keyframes sparkA {
-  0%,
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.35);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
 @keyframes trailFade {
   0% {
     opacity: 1;

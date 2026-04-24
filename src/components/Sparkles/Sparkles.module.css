@@ -1,6 +1,18 @@
 .spark {
   position: absolute;
   z-index: 7;
-  animation: sparkA var(--sd, 3s) var(--del, 0s) ease-in-out infinite;
+  animation: sparkle var(--sd, 3s) var(--del, 0s) ease-in-out infinite;
   transform-origin: center;
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }

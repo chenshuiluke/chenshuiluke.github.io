@@ -3,6 +3,18 @@
   border-radius: 50%;
   background: var(--star);
   z-index: 7;
-  animation: sparkA var(--sd, 4s) var(--del, 0s) ease-in-out infinite;
+  animation: dotSpark var(--sd, 4s) var(--del, 0s) ease-in-out infinite;
   transform-origin: center;
+}
+
+@keyframes dotSpark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }

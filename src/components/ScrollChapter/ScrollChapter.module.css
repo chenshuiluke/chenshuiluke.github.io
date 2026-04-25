@@ -33,12 +33,12 @@
 
 .eyebrow {
   font-family: var(--font-fredoka), "Fredoka One", cursive;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--warm);
   margin-bottom: 0.6rem;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .title {

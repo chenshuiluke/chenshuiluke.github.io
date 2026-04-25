@@ -39,7 +39,7 @@
 
 .bio {
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   color: #8088a0;
   margin-top: 4px;
   line-height: 1.5;
@@ -47,12 +47,16 @@
 
 .follow {
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.24em;
+  font-size: 12px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #e9ecf2;
   border: 1px solid rgba(233, 236, 242, 0.28);
-  padding: 10px 16px;
+  padding: 13px 18px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   text-decoration: none;
   background: transparent;

@@ -28,17 +28,23 @@
 
 .links {
   display: flex;
-  gap: 1.4rem;
-  font-size: 0.78rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem 1.4rem;
+  font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .links a {
   color: var(--cream);
-  opacity: 0.55;
+  opacity: 0.6;
   text-decoration: none;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 6px;
 }
 
 .links a:hover {

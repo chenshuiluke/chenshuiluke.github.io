@@ -21,11 +21,15 @@
 
 .a {
   font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.24em;
+  font-size: 12px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #e9c789;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
 }
 
 .a:hover {

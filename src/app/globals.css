@@ -18,6 +18,12 @@ html,
 body {
   background: var(--space);
   font-family: var(--font-nunito), "Nunito", sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html {
+  overflow-x: clip;
 }
 
 body {

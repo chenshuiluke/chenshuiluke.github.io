@@ -6,10 +6,11 @@
   text-align: center;
   z-index: 18;
   white-space: nowrap;
+  max-width: 92vw;
 }
 
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -40,15 +41,34 @@
 .btn {
   font-family: var(--font-nunito), "Nunito", sans-serif;
   font-weight: 800;
-  font-size: 0.86rem;
+  font-size: 0.95rem;
   letter-spacing: 0.04em;
-  padding: 0.6rem 1.6rem;
+  padding: 0.85rem 1.6rem;
   border-radius: 100px;
   border: 2.5px solid var(--ol);
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   transition: transform 0.12s, box-shadow 0.12s;
+}
+
+@media (max-width: 480px) {
+  .ctaRow {
+    flex-wrap: wrap;
+    gap: 0.7rem;
+  }
+  .headline {
+    font-size: clamp(2rem, 9vw, 2.6rem);
+    white-space: normal;
+  }
+  .eyebrow {
+    white-space: normal;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+  }
 }
 
 .btn:active {

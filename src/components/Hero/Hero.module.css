@@ -1,6 +1,6 @@
 .hero {
   position: absolute;
-  top: clamp(36vh, 42vh, 47vh);
+  top: clamp(32vh, 38vh, 42vh);
   left: 50%;
   transform: translateX(-50%);
   text-align: center;

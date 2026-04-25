@@ -1,0 +1,14 @@
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  text-decoration: none;
+  background: rgba(160, 200, 255, 0.12);
+  color: #cfe3ff;
+  border: 1px solid rgba(160, 200, 255, 0.25);
+}
+
+.pill:hover {
+  background: rgba(160, 200, 255, 0.22);
+}

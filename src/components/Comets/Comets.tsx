@@ -115,7 +115,7 @@ export function Comets() {
   }, []);
 
   return (
-    <div ref={rootRef}>
+    <div ref={rootRef} className={styles.layer} aria-hidden>
       {COMETS.map((c) => {
         const cx = c.headRight ? 42 : 14;
         return (

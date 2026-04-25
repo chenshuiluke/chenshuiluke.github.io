@@ -9,11 +9,11 @@ import { Footer } from "@/components/Footer/Footer";
 import { Hero } from "@/components/Hero/Hero";
 import { Nav } from "@/components/Nav/Nav";
 import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";
+import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
 import { Rocket } from "@/components/Rocket/Rocket";
 import { Scene } from "@/components/Scene/Scene";
 import { ScrollChapter } from "@/components/ScrollChapter/ScrollChapter";
 import { SpaceBackground } from "@/components/SpaceBackground/SpaceBackground";
-import { SpaceLandscape } from "@/components/SpaceLandscape/SpaceLandscape";
 import { Sparkles } from "@/components/Sparkles/Sparkles";
 import { CrescentMoon } from "@/components/svg/CrescentMoon";
 import { Planet } from "@/components/svg/Planet";
@@ -30,12 +30,14 @@ import {
 export default function Home() {
   return (
     <Scene>
-      <SpaceLandscape />
+      <SpaceBackground />
       <ParallaxStars />
+      <DotStars />
+      <Sparkles />
+      <Comets />
       <Nav />
 
       <ChapterHero>
-        <SpaceBackground />
         <Avatar />
         <Hero />
         <Rocket />
@@ -67,9 +69,7 @@ export default function Home() {
         >
           <Planet />
         </FloatingObject>
-        <Comets />
-        <Sparkles />
-        <DotStars />
+        <RecentPosts />
       </ChapterHero>
 
       <ScrollChapter

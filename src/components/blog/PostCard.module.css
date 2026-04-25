@@ -1,0 +1,82 @@
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.thumb {
+  aspect-ratio: 5 / 4;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.025) 0 2px,
+      transparent 2px 12px
+    ),
+    linear-gradient(180deg, #0c1530, #0a1024);
+  border: 1px solid rgba(233, 236, 242, 0.14);
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at var(--gx, 50%) var(--gy, 50%),
+    var(--gc, rgba(233, 199, 137, 0.18)),
+    transparent 55%
+  );
+}
+
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card:hover .thumb {
+  border-color: #e9c789;
+}
+
+.tag {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #e9c789;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  color: #e9ecf2;
+  text-wrap: balance;
+}
+
+.summary {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 14px;
+  color: #b9c0cf;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.meta {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8088a0;
+  margin: 0;
+}

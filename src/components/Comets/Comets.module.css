@@ -1,31 +1,38 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: visible;
+}
+
 .comet {
   position: absolute;
-  z-index: 6;
   opacity: 0;
   pointer-events: none;
   overflow: visible;
 }
 
 .c1 {
-  top: 22%;
+  top: 18%;
   left: -20%;
   animation: cm1 13s 1s linear infinite;
 }
 
 .c2 {
-  top: 65%;
+  top: 55%;
   left: -20%;
   animation: cm2 17s 6s linear infinite;
 }
 
 .c3 {
-  top: 38%;
+  top: 32%;
   right: -20%;
   animation: cm3 15s 9s linear infinite;
 }
 
 .c4 {
-  top: 80%;
+  top: 78%;
   right: -20%;
   animation: cm4 11s 3s linear infinite;
 }
@@ -103,5 +110,5 @@
   position: fixed;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 8;
+  z-index: 3;
 }

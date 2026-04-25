@@ -2,9 +2,13 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 55% 45% at 80% 25%, #162440 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 15% 75%, #1a2e48 0%, transparent 55%),
-    radial-gradient(ellipse 70% 60% at 50% 110%, #111f32 0%, #0d1826 70%);
+    radial-gradient(ellipse 55% 8% at 80% 8%, #162440 0%, transparent 60%),
+    radial-gradient(ellipse 50% 7% at 15% 22%, #1a2e48 0%, transparent 55%),
+    radial-gradient(ellipse 60% 6% at 70% 38%, #1d2d4d 0%, transparent 60%),
+    radial-gradient(ellipse 55% 7% at 25% 55%, #182c46 0%, transparent 58%),
+    radial-gradient(ellipse 65% 6% at 75% 72%, #16284a 0%, transparent 60%),
+    radial-gradient(ellipse 50% 7% at 30% 88%, #1a2e48 0%, transparent 55%),
+    linear-gradient(to bottom, #0d1826 0%, #0a1422 100%);
 }
 
 .neb {

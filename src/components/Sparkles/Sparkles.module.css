@@ -1,6 +1,12 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .spark {
   position: absolute;
-  z-index: 7;
   animation: sparkle var(--sd, 3s) var(--del, 0s) ease-in-out infinite;
   transform-origin: center;
 }

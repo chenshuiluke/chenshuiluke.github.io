@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Luke Chen Shui — Blog</title>
+        <link>https://chenshuiluke.github.io</link>
+        <description>Posts by Luke Chen Shui</description>
+        <lastBuildDate>Sat, 25 Apr 2026 02:36:38 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>en</language>
+        <copyright>All rights reserved 2026, Luke Chen Shui</copyright>
+        <item>
+            <title><![CDATA[My experience with the 16GB M4 MacBook Pro]]></title>
+            <link>https://chenshuiluke.github.io/blog/16gb-m4-macbook-pro</link>
+            <guid isPermaLink="false">https://chenshuiluke.github.io/blog/16gb-m4-macbook-pro</guid>
+            <pubDate>Fri, 24 Apr 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Six months with the 16GB M4 MacBook Pro — from a developer who games on a PC with an RTX 4070]]></description>
+            <category>macbook</category>
+            <category>macbook-pro</category>
+            <category>apple</category>
+            <category>m4</category>
+            <category>developer</category>
+            <category>hardware</category>
+            <category>review</category>
+            <category>productivity</category>
+        </item>
+    </channel>
+</rss>

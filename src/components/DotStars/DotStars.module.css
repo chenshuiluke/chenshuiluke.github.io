@@ -1,8 +1,14 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .dot {
   position: absolute;
   border-radius: 50%;
   background: var(--star);
-  z-index: 7;
   animation: dotSpark var(--sd, 4s) var(--del, 0s) ease-in-out infinite;
   transform-origin: center;
 }

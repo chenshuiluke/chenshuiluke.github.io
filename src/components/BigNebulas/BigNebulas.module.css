@@ -1,7 +1,6 @@
 .bigneb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
   pointer-events: none;
   z-index: 1;
   animation-timing-function: ease-in-out;

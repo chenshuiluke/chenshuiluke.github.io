@@ -39,7 +39,7 @@ export function BigNebulas() {
           height: n.height,
           top: `${n.top}%`,
           left: `${n.left}%`,
-          background: n.color,
+          background: `radial-gradient(ellipse, ${n.color} 0%, ${n.color}88 25%, ${n.color}44 45%, transparent 70%)`,
           opacity: n.opacity,
           animationDuration: `${n.pulseDur}s`,
           animationDelay: `${n.pulseDelay}s`,

@@ -25,7 +25,7 @@ export function SpaceBackground() {
             top: n.top,
             ...(n.left ? { left: n.left } : {}),
             ...(n.right ? { right: n.right } : {}),
-            background: n.color,
+            background: `radial-gradient(ellipse, ${n.color} 0%, ${n.color}88 25%, ${n.color}44 45%, transparent 70%)`,
             opacity: n.opacity,
             animationDelay: n.delay,
           }}

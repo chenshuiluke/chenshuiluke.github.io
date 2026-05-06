@@ -1,0 +1,20 @@
+.planet {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 90px;
+  height: 90px;
+  z-index: 3;
+  opacity: 0.45;
+  pointer-events: none;
+  animation: distFloat 18s ease-in-out infinite alternate;
+}
+
+@keyframes distFloat {
+  from {
+    transform: translate(0, 0) rotate(-6deg);
+  }
+  to {
+    transform: translate(-14px, 10px) rotate(2deg);
+  }
+}

@@ -1,0 +1,21 @@
+.moon {
+  position: absolute;
+  top: 14%;
+  left: 38%;
+  width: 46px;
+  height: 46px;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.55;
+  animation: moonOrbit 60s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes moonOrbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

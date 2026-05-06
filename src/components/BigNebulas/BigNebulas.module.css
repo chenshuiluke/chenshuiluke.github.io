@@ -1,0 +1,71 @@
+.bigneb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 1;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-name: nebPulse;
+}
+
+.drift1 {
+  animation-name: nebPulse, bnDrift1;
+  animation-duration: inherit, 70s;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+}
+
+.drift2 {
+  animation-name: nebPulse, bnDrift2;
+  animation-duration: inherit, 90s;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+}
+
+.drift3 {
+  animation-name: nebPulse, bnDrift3;
+  animation-duration: inherit, 80s;
+  animation-timing-function: ease-in-out, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+}
+
+@keyframes bnDrift1 {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(60px, 40px);
+  }
+}
+
+@keyframes bnDrift2 {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-50px, -35px);
+  }
+}
+
+@keyframes bnDrift3 {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(40px, -30px);
+  }
+}
+
+@keyframes nebPulse {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 0.4;
+  }
+}

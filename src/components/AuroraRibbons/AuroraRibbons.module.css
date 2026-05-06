@@ -1,0 +1,32 @@
+.aurora {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 160px;
+  z-index: 2;
+  pointer-events: none;
+  filter: blur(40px);
+  opacity: 0.18;
+  mix-blend-mode: screen;
+}
+
+.a1 {
+  top: 18%;
+  background: linear-gradient(90deg, transparent, #4ad8c0 30%, #a060ff 60%, transparent);
+  animation: auroraWave 14s ease-in-out infinite alternate;
+}
+
+.a2 {
+  top: 54%;
+  background: linear-gradient(90deg, transparent, #ff80c0 25%, #6080ff 55%, transparent);
+  animation: auroraWave 18s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes auroraWave {
+  from {
+    transform: translateX(0) skewY(-2deg);
+  }
+  to {
+    transform: translateX(-30px) skewY(3deg);
+  }
+}

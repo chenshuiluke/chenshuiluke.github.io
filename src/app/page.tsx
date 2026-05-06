@@ -1,12 +1,17 @@
 import { AnimatedCard } from "@/components/AnimatedCard/AnimatedCard";
+import { AuroraRibbons } from "@/components/AuroraRibbons/AuroraRibbons";
 import { Avatar } from "@/components/Avatar/Avatar";
+import { BigNebulas } from "@/components/BigNebulas/BigNebulas";
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
 import { Comets } from "@/components/Comets/Comets";
+import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
 import { DotStars } from "@/components/DotStars/DotStars";
 import { FloatingColumn } from "@/components/FloatingColumn/FloatingColumn";
 import { FloatingObject } from "@/components/FloatingObject/FloatingObject";
 import { Footer } from "@/components/Footer/Footer";
+import { GlowStars } from "@/components/GlowStars/GlowStars";
 import { Hero } from "@/components/Hero/Hero";
+import { MoonPhase } from "@/components/MoonPhase/MoonPhase";
 import { Nav } from "@/components/Nav/Nav";
 import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";
 import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
@@ -31,6 +36,11 @@ export default function Home() {
   return (
     <Scene>
       <SpaceBackground />
+      <BigNebulas />
+      <AuroraRibbons />
+      <MoonPhase />
+      <DistantPlanet />
+      <GlowStars />
       <ParallaxStars />
       <DotStars />
       <Sparkles />

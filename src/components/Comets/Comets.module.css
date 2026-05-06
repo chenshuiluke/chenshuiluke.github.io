@@ -105,6 +105,18 @@
   }
 }
 
+.c5 {
+  top: 8%;
+  left: -20%;
+  animation: cm1 14s 4.5s linear infinite;
+}
+
+.c6 {
+  top: 52%;
+  right: -20%;
+  animation: cm3 16s 12s linear infinite;
+}
+
 /* world-space particle rendered by Comets.tsx; positioned:fixed so it lingers after the comet head moves on */
 .trailP {
   position: fixed;

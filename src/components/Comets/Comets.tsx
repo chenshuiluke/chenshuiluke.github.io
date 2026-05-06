@@ -40,6 +40,20 @@ const COMETS: CometDef[] = [
     headColor: "#ffaacc",
     haloAlphas: [0.95, 0.2],
   },
+  {
+    cls: "c5",
+    headRight: true,
+    palette: ["#c8b0ff", "#e0caff", "#ffffff", "#b090ee"],
+    headColor: "#c8b0ff",
+    haloAlphas: [0.95, 0.22, 0.07],
+  },
+  {
+    cls: "c6",
+    headRight: false,
+    palette: ["#ffeaa0", "#ffd870", "#ffffff", "#fff4c0"],
+    headColor: "#ffeaa0",
+    haloAlphas: [0.95, 0.2, 0.06],
+  },
 ];
 
 export function Comets() {

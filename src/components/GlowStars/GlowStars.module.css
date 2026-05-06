@@ -1,0 +1,18 @@
+.glowStar {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 5;
+  pointer-events: none;
+  animation: glowPulse var(--gd, 4s) var(--gdd, 0s) ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  from {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}

@@ -7,7 +7,7 @@ import path from "node:path";
 
 const posts = defineCollection({
   name: "Post",
-  pattern: "blog/**/*.mdx",
+  pattern: "blog/**/*.{md,mdx}",
   schema: s
     .object({
       title: s.string().max(120),

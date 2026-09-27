@@ -1,0 +1,78 @@
+.sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.orb {
+  position: absolute;
+  animation: drift 18s ease-in-out infinite alternate;
+}
+.sky .orb > [data-planet] {
+  width: 100%;
+}
+.large {
+  width: 170px;
+  top: 14%;
+  left: 1%;
+  filter: hue-rotate(300deg);
+}
+.small {
+  width: 88px;
+  top: 17%;
+  right: 18%;
+  animation-duration: 23s;
+  animation-delay: -9s;
+}
+.medium {
+  width: clamp(130px, 14vw, 200px);
+  bottom: 7%;
+  right: 3%;
+  filter: hue-rotate(65deg);
+  animation-duration: 21s;
+  animation-delay: -6s;
+}
+.about .large {
+  filter: hue-rotate(155deg);
+}
+.about .medium {
+  filter: hue-rotate(300deg);
+}
+.contact .large {
+  filter: hue-rotate(65deg);
+}
+.contact .medium {
+  filter: hue-rotate(315deg);
+}
+@keyframes drift {
+  from {
+    transform: translateY(0) rotate(-8deg);
+  }
+  to {
+    transform: translateY(-14px) rotate(7deg);
+  }
+}
+@media (max-width: 1200px) {
+  .large {
+    width: 96px;
+    top: 94px;
+    left: auto;
+    right: 0;
+  }
+  .small {
+    width: 52px;
+    top: 110px;
+    left: 4%;
+    right: auto;
+  }
+  .medium {
+    width: 110px;
+    bottom: 58px;
+    right: 6%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb {
+    animation: none;
+  }
+}

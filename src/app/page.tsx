@@ -3,6 +3,7 @@ import { AuroraRibbons } from "@/components/AuroraRibbons/AuroraRibbons";
 import { Avatar } from "@/components/Avatar/Avatar";
 import { BigNebulas } from "@/components/BigNebulas/BigNebulas";
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
+import { ChapterSky } from "@/components/ChapterSky/ChapterSky";
 import { Comets } from "@/components/Comets/Comets";
 import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
 import { DotStars } from "@/components/DotStars/DotStars";
@@ -96,6 +97,7 @@ export default function Home() {
 
       <ScrollChapter
         id="work"
+        scenery={<ChapterSky chapter="work" />}
         eyebrow="01 — Work"
         title="Things I've shipped."
         body={<p>{WORK_LIPSUM}</p>}
@@ -110,6 +112,7 @@ export default function Home() {
 
       <ScrollChapter
         id="about"
+        scenery={<ChapterSky chapter="about" />}
         eyebrow="02 — About"
         title="Who's behind the keys."
         body={
@@ -128,6 +131,7 @@ export default function Home() {
 
       <ScrollChapter
         id="contact"
+        scenery={<ChapterSky chapter="contact" />}
         eyebrow="03 — Contact"
         title="Beam me a message."
         body={<p>{CONTACT_LIPSUM}</p>}

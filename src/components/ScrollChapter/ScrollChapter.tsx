@@ -13,7 +13,8 @@ const Ctx = createContext<ChapterCtx | null>(null);
 
 export function useChapterProgress() {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useChapterProgress must be used inside ScrollChapter");
+  if (!ctx)
+    throw new Error("useChapterProgress must be used inside ScrollChapter");
   return ctx.progress;
 }
 
@@ -23,12 +24,14 @@ export function ScrollChapter({
   title,
   body,
   cards,
+  scenery,
 }: {
   id: string;
   eyebrow?: string;
   title: string;
   body: ReactNode;
   cards: ReactNode;
+  scenery?: ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -40,6 +43,7 @@ export function ScrollChapter({
     <Ctx.Provider value={{ progress: scrollYProgress }}>
       <section ref={ref} id={id} className={styles.section}>
         <div className={styles.pin}>
+          {scenery}
           <div className={styles.inner}>
             <TextSide eyebrow={eyebrow} title={title} body={body} />
             <div className={styles.cards}>{cards}</div>

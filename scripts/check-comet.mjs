@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
+import { cometTailOffset } from "../src/lib/comet-tail.ts";
 const require = createRequire(import.meta.url);
 const sharp = require(
   require.resolve("sharp", { paths: [require.resolve("next/package.json")] }),
@@ -41,13 +42,35 @@ const css = readFileSync(
   "utf8",
 );
 assert.equal(
-  (component.match(/<PixelSprite/g) || []).length,
-  3,
-  "Nucleus and two tails render independently",
+  (component.match(/<CometSprite/g) || []).length,
+  1,
+  "One intact sprite, no duplicated tail ghosts",
 );
-for (const layer of ["tail", "ionTail", "nucleus"])
-  assert(component.includes(`styles.${layer}`));
-for (const motion of ["tailWave", "ionWave"])
-  assert(css.includes(`@keyframes ${motion}`));
+for (let t = 0; t < 10; t += 0.1) {
+  for (let x = 0; x < 192; x += 2) {
+    const offset = cometTailOffset(x, t);
+    assert(Math.abs(offset) <= 4, "Ripple fits transparent padding");
+    if (x >= 144) assert.equal(offset, 0, "Nucleus never bends");
+    assert(
+      Math.abs(cometTailOffset(x, t + 1 / 60) - offset) < 0.31,
+      "Small smooth frame-to-frame motion",
+    );
+  }
+}
+assert.notEqual(cometTailOffset(20, 0), cometTailOffset(20, 0.5));
+// Follow a crest for 0.1s: phase velocity is -22 * 4.5 pixels/second.
+const envelope = (x) => ((144 - x) / 144) ** 1.6;
+assert(
+  Math.abs(
+    cometTailOffset(80, 0) / envelope(80) -
+      cometTailOffset(70.1, 0.1) / envelope(70.1),
+  ) < 1e-10,
+);
+assert(
+  !css.includes("skewY") && !css.includes("scale("),
+  "No elastic CSS stretching",
+);
 assert(css.includes("prefers-reduced-motion"));
-console.log("Independent tail layers and reduced-motion checks passed");
+console.log(
+  "Anchored nucleus, outward ripple, smoothness and reduced-motion checks passed",
+);

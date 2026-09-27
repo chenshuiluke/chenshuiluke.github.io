@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useRef } from "react";
 import { SkyPaused } from "@/components/Scene/Scene";
-import { cometTailOffset } from "@/lib/comet-tail";
+import { paintComet } from "@/lib/comet-tail";
 
 export function CometSprite({ className }: { className: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -20,19 +20,21 @@ export function CometSprite({ className }: { className: string }) {
     if (!sourceContext) return;
     context.imageSmoothingEnabled = sourceContext.imageSmoothingEnabled = false;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const frame = context.createImageData(192, 96);
+    let pixels: Uint8ClampedArray;
     let ready = false,
       visible = false,
       disposed = false,
       request = 0,
       previous = 0;
     const draw = () => {
-      context.clearRect(0, 0, 192, 80);
-      // Move narrow strips vertically, never stretch or duplicate the artwork.
-      for (let x = 0; x < 144; x += 2) {
-        const offset = cometTailOffset(x, elapsed.current);
-        context.drawImage(source, x, 0, 2, 64, x, 8 + offset, 2, 64);
-      }
-      context.drawImage(source, 144, 0, 48, 64, 144, 8, 48, 64);
+      paintComet(
+        frame.data,
+        pixels,
+        elapsed.current,
+        Number(canvas.parentElement?.dataset.bend || 0),
+      );
+      context.putImageData(frame, 0, 0);
       canvas.dataset.frame = elapsed.current.toFixed(3);
     };
     const tick = (now: number) => {
@@ -65,6 +67,7 @@ export function CometSprite({ className }: { className: string }) {
     image.onload = () => {
       if (disposed) return;
       sourceContext.drawImage(image, 0, 0, 192, 64);
+      pixels = sourceContext.getImageData(0, 0, 192, 64).data;
       ready = true;
       draw();
       canvas.dataset.ready = "true";
@@ -84,5 +87,5 @@ export function CometSprite({ className }: { className: string }) {
     };
   }, [paused]);
 
-  return <canvas ref={ref} className={className} width={192} height={80} />;
+  return <canvas ref={ref} className={className} width={192} height={96} />;
 }

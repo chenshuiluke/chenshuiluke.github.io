@@ -5,99 +5,26 @@
   z-index: 3;
   overflow: hidden;
 }
-
 .comet {
-  --angle: 17deg;
   position: absolute;
-  left: -300px;
+  top: 0;
+  left: 0;
   width: clamp(174px, 21vw, 288px);
-  aspect-ratio: 2.4;
+  aspect-ratio: 2;
   opacity: 0;
-  transform-origin: right center;
-  animation: shootingStar 10s linear infinite;
+  transform-origin: 0 0;
+}
+.comet:nth-child(3n) {
+  width: clamp(140px, 17vw, 240px);
 }
 .sprite {
-  position: absolute;
-  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
 }
-
-.c1 {
-  top: 3%;
-  animation-delay: -2s;
-}
-.c2 {
-  top: 48%;
-  --angle: 11deg;
-  filter: hue-rotate(65deg);
-  animation-duration: 11s;
-  animation-delay: -5s;
-}
-.c3 {
-  left: 110vw;
-  top: 9%;
-  --angle: 164deg;
-  filter: hue-rotate(165deg);
-  animation-duration: 13s;
-  animation-delay: -8s;
-}
-.c4 {
-  left: 110vw;
-  top: 50%;
-  --angle: 173deg;
-  filter: hue-rotate(280deg);
-  animation-duration: 12s;
-  animation-delay: -3s;
-}
-.c5 {
-  top: 25%;
-  --angle: 9deg;
-  width: clamp(130px, 15vw, 220px);
-  filter: hue-rotate(225deg);
-  animation-duration: 14s;
-  animation-delay: -10s;
-}
-.c6 {
-  left: 110vw;
-  top: 72%;
-  --angle: 188deg;
-  width: clamp(140px, 17vw, 240px);
-  filter: hue-rotate(115deg);
-  animation-duration: 11.5s;
-  animation-delay: -6s;
-}
-
-@keyframes shootingStar {
-  0% {
-    opacity: 0;
-    transform: rotate(var(--angle)) translateX(0);
-  }
-  2%,
-  34% {
-    opacity: 0.85;
-  }
-  40%,
-  100% {
-    opacity: 0;
-    transform: rotate(var(--angle)) translateX(160vmax);
-  }
-}
-
 @media (max-width: 540px) {
-  .comet {
-    --angle: 28deg;
-  }
-  .c3 {
-    --angle: 152deg;
-  }
-  .c4 {
-    --angle: 168deg;
-  }
-  .c5,
-  .c6 {
+  .comet:nth-child(n + 5) {
     display: none;
   }
 }

@@ -24,22 +24,36 @@ body {
 
 html {
   overflow-x: clip;
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid #eeb78a;
+  outline-offset: 5px;
+}
+::selection {
+  background: #e07a50;
+  color: #0b1420;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
   overflow-x: clip;
 }
 
-/* shared float / entry / dust keyframes */
-@keyframes objFloat {
-  from {
-    transform: translateY(0) rotate(var(--r0, 0deg));
-  }
-  to {
-    transform: translateY(var(--ty, -12px)) rotate(var(--r1, 5deg));
-  }
-}
-
+/* shared entry / dust keyframes */
 @keyframes fadeUpC {
   from {
     opacity: 0;

@@ -5,7 +5,7 @@ export function Avatar() {
   return (
     <div className={styles.wrap}>
       <Image
-        src="/luke-avatar.png"
+        src="/luke-avatar-pixel-cutout.png"
         alt="Luke"
         width={440}
         height={440}

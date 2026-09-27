@@ -3,124 +3,97 @@
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .comet {
+  --angle: 17deg;
   position: absolute;
+  left: -300px;
+  width: clamp(174px, 21vw, 288px);
+  aspect-ratio: 3;
   opacity: 0;
-  pointer-events: none;
-  overflow: visible;
+  transform-origin: right center;
+  animation: shootingStar 19s linear infinite;
+}
+.sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  transform-origin: 88% 50%;
+  animation: shimmer 1.8s ease-in-out infinite alternate;
 }
 
 .c1 {
-  top: 18%;
-  left: -20%;
-  animation: cm1 13s 1s linear infinite;
+  top: 3%;
+  animation-delay: -2s;
 }
-
 .c2 {
-  top: 55%;
-  left: -20%;
-  animation: cm2 17s 6s linear infinite;
+  top: 48%;
+  --angle: 11deg;
+  filter: hue-rotate(28deg);
+  animation-duration: 23s;
+  animation-delay: -10s;
 }
-
 .c3 {
-  top: 32%;
-  right: -20%;
-  animation: cm3 15s 9s linear infinite;
+  left: 110vw;
+  top: 9%;
+  --angle: 164deg;
+  filter: hue-rotate(165deg);
+  animation-duration: 27s;
+  animation-delay: -17s;
 }
-
 .c4 {
-  top: 78%;
-  right: -20%;
-  animation: cm4 11s 3s linear infinite;
+  left: 110vw;
+  top: 50%;
+  --angle: 173deg;
+  filter: hue-rotate(55deg);
+  animation-duration: 21s;
+  animation-delay: -8s;
 }
 
-@keyframes cm1 {
+@keyframes shootingStar {
   0% {
     opacity: 0;
-    transform: translate(0, 0);
+    transform: rotate(var(--angle)) translateX(0);
   }
-  6% {
-    opacity: 1;
+  2%,
+  19% {
+    opacity: 0.85;
   }
-  88% {
-    opacity: 1;
-  }
+  24%,
   100% {
     opacity: 0;
-    transform: translate(140vw, -40vh);
+    transform: rotate(var(--angle)) translateX(160vmax);
   }
 }
 
-@keyframes cm2 {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
+@keyframes shimmer {
+  from {
+    transform: scaleY(0.94);
+    opacity: 0.8;
   }
-  5% {
+  to {
+    transform: scaleY(1.04);
     opacity: 1;
-  }
-  86% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(130vw, -26vh);
   }
 }
 
-@keyframes cm3 {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
+@media (max-width: 540px) {
+  .comet {
+    --angle: 28deg;
   }
-  6% {
-    opacity: 1;
+  .c3 {
+    --angle: 152deg;
   }
-  87% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-135vw, -24vh);
+  .c2,
+  .c4 {
+    display: none;
   }
 }
-
-@keyframes cm4 {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
+@media (prefers-reduced-motion: reduce) {
+  .layer {
+    display: none;
   }
-  7% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-120vw, 14vh);
-  }
-}
-
-.c5 {
-  top: 8%;
-  left: -20%;
-  animation: cm1 14s 4.5s linear infinite;
-}
-
-.c6 {
-  top: 52%;
-  right: -20%;
-  animation: cm3 16s 12s linear infinite;
-}
-
-/* world-space particle rendered by Comets.tsx; positioned:fixed so it lingers after the comet head moves on */
-.trailP {
-  position: fixed;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 3;
 }

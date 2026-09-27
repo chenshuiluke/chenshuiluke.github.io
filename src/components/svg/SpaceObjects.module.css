@@ -1,0 +1,132 @@
+.moon {
+  width: 112px;
+}
+.planet {
+  width: 208px;
+}
+.planet[data-planet="gold"],
+.planet[data-planet="jade"] {
+  width: 184px;
+}
+.planet,
+.moon {
+  display: inline-grid;
+  position: relative;
+  place-items: center;
+  aspect-ratio: 1.3;
+}
+.globe {
+  display: block;
+  width: 82%;
+  aspect-ratio: 1;
+}
+.globe canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.globe:has(canvas:not([data-ready="true"])) {
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #698b85, #393045 75%);
+}
+.planetGlimmer {
+  position: absolute;
+  top: 12%;
+  left: 15%;
+  color: #e8edcf;
+  font-size: 10px;
+  animation: glint 6s ease-in-out infinite alternate;
+}
+
+.satellite {
+  position: relative;
+  width: 128px;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.satelliteLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.satelliteBody {
+  clip-path: inset(45% 39% 0 38.5%);
+}
+.wingLeft {
+  clip-path: inset(45% 61.5% 0 0);
+  transform-origin: 38.5% 64.4%;
+  animation: wingFlex 4.8s ease-in-out infinite alternate;
+}
+.wingRight {
+  clip-path: inset(45% 0 0 61%);
+  transform-origin: 61% 64.4%;
+  animation: wingFlex 6.2s -2.4s ease-in-out infinite alternate-reverse;
+}
+.dish {
+  clip-path: inset(0 0 55% 0);
+  transform-origin: 49.2% 45%;
+  animation: dishScan 4.4s ease-in-out infinite alternate;
+}
+.sensorRotor {
+  clip-path: circle(5.1% at 49.2% 64.4%);
+  transform-origin: 49.2% 64.4%;
+  animation: rotorSpin 3.2s linear infinite;
+}
+@keyframes wingFlex {
+  from {
+    transform: rotate(-9deg) scaleX(0.65);
+  }
+  to {
+    transform: rotate(9deg) scaleX(1);
+  }
+}
+@keyframes dishScan {
+  from {
+    transform: rotate(-18deg);
+  }
+  to {
+    transform: rotate(18deg);
+  }
+}
+@keyframes rotorSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes glint {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+@media (max-width: 600px) {
+  .satellite {
+    width: 92px;
+    margin-left: -8px;
+    top: -12px;
+  }
+  .moon {
+    width: 82px;
+  }
+  .planet {
+    width: 162px;
+  }
+  .planet[data-planet="gold"],
+  .planet[data-planet="jade"] {
+    width: 112px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .planetGlimmer,
+  .wingLeft,
+  .wingRight,
+  .dish,
+  .sensorRotor {
+    animation: none;
+  }
+}

@@ -1,10 +1,8 @@
 import type { CSSProperties } from "react";
 import styles from "./Sparkles.module.css";
 
-const BIG_PATH =
-  "M0,-9 C1.8,-1.8 1.8,-1.8 9,0 C1.8,1.8 1.8,1.8 0,9 C-1.8,1.8 -1.8,1.8 -9,0 C-1.8,-1.8 -1.8,-1.8 0,-9Z";
-const SMALL_PATH =
-  "M0,-8 C1.5,-1.5 1.5,-1.5 8,0 C1.5,1.5 1.5,1.5 0,8 C-1.5,1.5 -1.5,1.5 -8,0 C-1.5,-1.5 -1.5,-1.5 0,-8Z";
+const BIG_PATH = "M-2-10H2V-4H4V-2H10V2H4V4H2V10H-2V4H-4V2H-10V-2H-4V-4H-2Z";
+const SMALL_PATH = "M-2-8H2V-2H8V2H2V8H-2V2H-8V-2H-2Z";
 
 function mulberry32(seed: number) {
   let s = seed;
@@ -17,7 +15,7 @@ function mulberry32(seed: number) {
   };
 }
 
-const COUNT = 60;
+const COUNT = 40;
 const rng = mulberry32(7);
 const SPARKS = Array.from({ length: COUNT }, () => {
   const left = +(rng() * 96 + 2).toFixed(2);
@@ -48,6 +46,7 @@ export function Sparkles() {
             width={s.size}
             height={s.size}
             viewBox={vb}
+            shapeRendering="crispEdges"
           >
             <path d={s.big ? BIG_PATH : SMALL_PATH} fill="#eee8dc" />
           </svg>

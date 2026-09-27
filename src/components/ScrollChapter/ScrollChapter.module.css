@@ -32,7 +32,7 @@
 }
 
 .eyebrow {
-  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-family: var(--font-pixel), monospace;
   font-size: 0.9rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -42,12 +42,14 @@
 }
 
 .title {
-  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-family: var(--font-pixel), monospace;
   font-size: clamp(2.4rem, 6vw, 4rem);
   color: var(--cream);
   line-height: 1.05;
   margin-bottom: 1.4rem;
-  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+  text-shadow:
+    3px 3px #514773,
+    6px 6px #0a1126;
 }
 
 .body {
@@ -62,4 +64,24 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+}
+
+@media (max-width: 540px) {
+  .pin {
+    padding: 100px 0 60px;
+  }
+  .inner {
+    gap: 1.2rem;
+  }
+  .title {
+    font-size: 2.1rem;
+    margin-bottom: 1rem;
+  }
+  .body {
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+  .cards {
+    gap: 1rem;
+  }
 }

@@ -7,6 +7,7 @@ type Props = {
   dur?: string;
   delay?: string;
   ty?: string;
+  tx?: string;
   r0?: string;
   r1?: string;
 };
@@ -17,6 +18,7 @@ export function FloatingObject({
   dur = "8s",
   delay = "0s",
   ty = "-12px",
+  tx = "0px",
   r0 = "0deg",
   r1 = "5deg",
 }: Props) {
@@ -25,6 +27,7 @@ export function FloatingObject({
     ["--dur" as string]: dur,
     ["--del" as string]: delay,
     ["--ty" as string]: ty,
+    ["--tx" as string]: tx,
     ["--r0" as string]: r0,
     ["--r1" as string]: r1,
   } as CSSProperties;

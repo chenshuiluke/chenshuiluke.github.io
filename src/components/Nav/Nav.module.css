@@ -27,8 +27,8 @@
 .stack {
   position: relative;
   display: inline-block;
-  font-family: var(--font-alfa-slab), "Alfa Slab One", Georgia, serif;
-  font-weight: 400;
+  font-family: var(--font-pixel), monospace;
+  font-weight: 700;
   font-size: 34px;
   letter-spacing: -0.015em;
   line-height: 1;
@@ -85,9 +85,10 @@
 }
 
 .links {
+  font-family: var(--font-pixel), monospace;
   display: flex;
   gap: 36px;
-  font-size: 12px;
+  font-size: 15px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }

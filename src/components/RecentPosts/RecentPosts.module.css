@@ -1,7 +1,7 @@
 .section {
   position: absolute;
   left: 50%;
-  bottom: clamp(3vh, 5vh, 7vh);
+  bottom: max(58px, 5vh);
   transform: translateX(-50%);
   width: min(960px, 86vw);
   z-index: 18;
@@ -51,22 +51,27 @@
   display: block;
   width: 100%;
   padding: 0.95rem 1.15rem 1rem;
-  border-radius: 14px;
+  border-radius: 0;
   background: rgba(13, 24, 38, 0.55);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(207, 227, 255, 0.1);
+  border: 2px solid #526488;
+  box-shadow: 4px 4px #0b1227;
   color: var(--cream);
   text-decoration: none;
-  transition: transform 0.18s ease, border-color 0.18s ease,
-    background 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .card:hover {
   transform: translateY(-3px);
   background: rgba(20, 34, 54, 0.65);
   border-color: rgba(207, 227, 255, 0.28);
-  box-shadow: 0 10px 24px -14px rgba(224, 122, 80, 0.45),
+  box-shadow:
+    0 10px 24px -14px rgba(224, 122, 80, 0.45),
     0 4px 12px -6px rgba(0, 0, 0, 0.5);
 }
 
@@ -82,7 +87,7 @@
 }
 
 .title {
-  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-family: var(--font-pixel), monospace;
   font-size: 1.1rem;
   line-height: 1.25;
   letter-spacing: 0.005em;
@@ -113,7 +118,9 @@
   font-size: 0.95rem;
   color: var(--warm);
   opacity: 0.6;
-  transition: transform 0.18s ease, opacity 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .card:hover .arrow {
@@ -135,8 +142,7 @@
   }
 }
 
-@media (max-height: 740px),
-       (max-width: 540px) {
+@media (max-height: 740px), (max-width: 540px) {
   .section {
     display: none;
   }

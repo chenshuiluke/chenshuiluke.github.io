@@ -7,7 +7,7 @@
 
 .dot {
   position: absolute;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--star);
   animation: dotSpark var(--sd, 4s) var(--del, 0s) ease-in-out infinite;
   transform-origin: center;

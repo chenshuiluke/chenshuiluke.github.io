@@ -5,9 +5,17 @@ import {
   Inter,
   JetBrains_Mono,
   Nunito,
+  Pixelify_Sans,
   Source_Serif_4,
 } from "next/font/google";
 import "./globals.css";
+
+const pixel = Pixelify_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-pixel",
+  display: "swap",
+});
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -65,7 +73,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fredoka.variable} ${nunito.variable} ${serif.variable} ${sans.variable} ${mono.variable} ${alfaSlab.variable}`}
+      className={`${fredoka.variable} ${nunito.variable} ${serif.variable} ${sans.variable} ${mono.variable} ${alfaSlab.variable} ${pixel.variable}`}
     >
       <body>{children}</body>
     </html>

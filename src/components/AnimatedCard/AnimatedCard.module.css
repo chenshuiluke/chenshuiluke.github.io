@@ -1,13 +1,16 @@
 .card {
   position: relative;
   padding: 1.4rem 1.6rem;
-  border-radius: 18px;
-  background: rgba(20, 32, 50, 0.78);
-  border: 1px solid rgba(240, 230, 213, 0.12);
+  border-radius: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(35, 51, 76, 0.85),
+    rgba(16, 28, 46, 0.82)
+  );
+  border: 2px solid #677da2;
   box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
-  backdrop-filter: blur(8px);
+    6px 6px 0 #0b1227,
+    0 3px 0 #afc1e633 inset;
   color: var(--cream);
   will-change: transform, opacity;
 }
@@ -22,7 +25,7 @@
 .dot {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 0;
   background: linear-gradient(135deg, var(--warm), #b04a2c);
   flex-shrink: 0;
   box-shadow: 0 0 14px rgba(224, 122, 80, 0.5);
@@ -35,8 +38,8 @@
 }
 
 .name {
-  font-family: var(--font-fredoka), "Fredoka One", cursive;
-  font-size: 1rem;
+  font-family: var(--font-pixel), monospace;
+  font-size: 1.25rem;
   color: var(--cream);
 }
 
@@ -51,4 +54,14 @@
   font-size: 1rem;
   line-height: 1.55;
   opacity: 0.9;
+}
+
+@media (max-width: 540px) {
+  .card {
+    padding: 1rem 1.2rem;
+  }
+  .quote {
+    font-size: 0.94rem;
+    line-height: 1.45;
+  }
 }

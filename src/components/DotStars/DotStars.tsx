@@ -12,13 +12,13 @@ function mulberry32(seed: number) {
   };
 }
 
-const COUNT = 220;
+const COUNT = 140;
 const rng = mulberry32(13);
 const DOTS = Array.from({ length: COUNT }, (_, i) => ({
   i,
   l: +(rng() * 99 + 0.5).toFixed(2),
   t: +(rng() * 99 + 0.5).toFixed(2),
-  size: +(1.2 + rng() * 3.6).toFixed(2),
+  size: 2 + Math.floor(rng() * 2) * 2,
   sd: +(2.5 + rng() * 4.5).toFixed(2),
   del: +(rng() * 4).toFixed(2),
 }));

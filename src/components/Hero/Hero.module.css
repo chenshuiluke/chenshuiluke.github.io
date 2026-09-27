@@ -1,6 +1,6 @@
 .hero {
   position: absolute;
-  top: clamp(32vh, 38vh, 42vh);
+  top: max(300px, 43vh);
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
@@ -10,6 +10,7 @@
 }
 
 .eyebrow {
+  font-family: var(--font-pixel), monospace;
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.22em;
@@ -20,14 +21,18 @@
 }
 
 .headline {
-  font-family: var(--font-fredoka), "Fredoka One", cursive;
+  font-family: var(--font-pixel), monospace;
+  font-weight: 600;
   font-size: clamp(2.6rem, 4.8vw, 4.8rem);
   color: var(--cream);
   line-height: 1;
-  -webkit-text-stroke: 2px var(--ol);
+  -webkit-text-stroke: 0;
   paint-order: stroke fill;
   animation: fadeUpC 0.7s 0.2s both;
   margin-bottom: 0.5rem;
+  text-shadow:
+    3px 3px 0 #4b416f,
+    6px 6px 0 #0a1126;
 }
 
 .ctaRow {
@@ -39,12 +44,14 @@
 }
 
 .btn {
-  font-family: var(--font-nunito), "Nunito", sans-serif;
+  font-family: var(--font-pixel), monospace;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   letter-spacing: 0.04em;
   padding: 0.85rem 1.6rem;
-  border-radius: 100px;
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
   border: 2.5px solid var(--ol);
   cursor: pointer;
   text-decoration: none;
@@ -52,7 +59,9 @@
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
 }
 
 @media (max-width: 480px) {
@@ -76,9 +85,16 @@
 }
 
 .primary {
-  background: var(--warm);
+  background: linear-gradient(
+    #ffd29c 0 4px,
+    #efa279 4px 50%,
+    #e88a68 50% calc(100% - 4px),
+    #bc5d64 calc(100% - 4px)
+  );
   color: var(--ol);
-  box-shadow: 3px 4px 0 var(--ol);
+  box-shadow:
+    4px 4px 0 #0a122a,
+    0 0 0 2px #efb292;
 }
 
 .primary:hover {
@@ -87,10 +103,46 @@
 }
 
 .ghost {
-  background: transparent;
+  background: #1e294d;
   color: var(--cream);
-  border-color: #2a4060;
-  box-shadow: 3px 4px 0 #182840;
+  border-color: #8296c3;
+  box-shadow:
+    4px 4px 0 #0a122a,
+    inset 0 3px #41567b;
+}
+
+.primary::after {
+  content: "";
+  position: absolute;
+  inset: -50% auto -50% -60%;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent 0 20%,
+    #fff4c82b 20% 65%,
+    #fff9db55 65% 80%,
+    transparent 80%
+  );
+  transform: skewX(-25deg);
+  animation: buttonGlisten 7s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes buttonGlisten {
+  0%,
+  55% {
+    transform: translateX(0) skewX(-25deg);
+  }
+  85%,
+  100% {
+    transform: translateX(700%) skewX(-25deg);
+  }
+}
+
+@media (max-width: 540px) {
+  .hero {
+    top: 355px;
+    width: 92vw;
+  }
 }
 
 .ghost:hover {

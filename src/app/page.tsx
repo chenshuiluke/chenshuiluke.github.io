@@ -15,14 +15,13 @@ import { MoonPhase } from "@/components/MoonPhase/MoonPhase";
 import { Nav } from "@/components/Nav/Nav";
 import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";
 import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
-import { Rocket } from "@/components/Rocket/Rocket";
 import { Scene } from "@/components/Scene/Scene";
 import { ScrollChapter } from "@/components/ScrollChapter/ScrollChapter";
 import { SpaceBackground } from "@/components/SpaceBackground/SpaceBackground";
 import { Sparkles } from "@/components/Sparkles/Sparkles";
 import { CrescentMoon } from "@/components/svg/CrescentMoon";
 import { Planet } from "@/components/svg/Planet";
-import { Satellite } from "@/components/svg/Satellite";
+import { PixelPlanet } from "@/components/svg/PixelPlanet";
 import {
   ABOUT_LIPSUM,
   ABOUT_QUOTES,
@@ -39,7 +38,6 @@ export default function Home() {
       <BigNebulas />
       <AuroraRibbons />
       <MoonPhase />
-      <DistantPlanet />
       <GlowStars />
       <ParallaxStars />
       <DotStars />
@@ -48,34 +46,48 @@ export default function Home() {
       <Nav />
 
       <ChapterHero>
+        <DistantPlanet />
         <Avatar />
         <Hero />
-        <Rocket />
         <FloatingObject
-          style={{ top: "18%", left: "6%" }}
-          dur="11s"
-          delay="2.5s"
-          ty="10px"
-          r0="8deg"
-          r1="16deg"
+          style={{ top: "18%", left: "2%" }}
+          dur="19s"
+          delay="-2.5s"
+          ty="16px"
+          tx="8px"
+          r0="-8deg"
+          r1="-3deg"
         >
-          <Satellite />
+          <PixelPlanet kind="gold" />
         </FloatingObject>
         <FloatingObject
-          style={{ top: "68%", right: "20%" }}
+          style={{ top: "26%", right: "1%" }}
+          dur="23s"
+          delay="-8s"
+          ty="-18px"
+          tx="-8px"
+          r0="12deg"
+          r1="16deg"
+        >
+          <PixelPlanet kind="jade" />
+        </FloatingObject>
+        <FloatingObject
+          style={{ top: "62%", right: "20%" }}
           dur="13s"
           delay="1s"
-          ty="-8px"
+          ty="-16px"
+          tx="-14px"
           r0="-4deg"
           r1="4deg"
         >
           <CrescentMoon />
         </FloatingObject>
         <FloatingObject
-          style={{ bottom: "5%", right: "3%" }}
+          style={{ bottom: "7%", right: "2%" }}
           dur="15s"
           delay="2s"
-          ty="-5px"
+          ty="-20px"
+          tx="-14px"
         >
           <Planet />
         </FloatingObject>

@@ -6,10 +6,10 @@ export function Hero() {
       <p className={styles.eyebrow}>Full Stack Software Engineer</p>
       <h1 className={styles.headline}>Hello, I&apos;m Luke.</h1>
       <div className={styles.ctaRow}>
-        <a href="#" className={`${styles.btn} ${styles.primary}`}>
+        <a href="#work" className={`${styles.btn} ${styles.primary}`}>
           See my work ✦
         </a>
-        <a href="#" className={`${styles.btn} ${styles.ghost}`}>
+        <a href="#contact" className={`${styles.btn} ${styles.ghost}`}>
           Say hello
         </a>
       </div>

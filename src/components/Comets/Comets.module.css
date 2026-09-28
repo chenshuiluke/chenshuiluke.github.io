@@ -10,21 +10,29 @@
   top: 0;
   left: 0;
   width: clamp(174px, 21vw, 288px);
-  aspect-ratio: 2;
+  aspect-ratio: 3;
   opacity: 0;
   transform-origin: 0 0;
 }
-.comet:nth-child(3n) {
+.comet:nth-of-type(3n) {
   width: clamp(140px, 17vw, 240px);
 }
-.sprite {
-  display: block;
+.fire {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   image-rendering: pixelated;
 }
+.head {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  clip-path: inset(0 0 0 76%);
+}
 @media (max-width: 540px) {
-  .comet:nth-child(n + 5) {
+  .comet:nth-of-type(n + 5) {
     display: none;
   }
 }

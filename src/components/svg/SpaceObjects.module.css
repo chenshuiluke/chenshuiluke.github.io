@@ -14,6 +14,8 @@
   position: relative;
   place-items: center;
   aspect-ratio: 1.3;
+  /* Filter the moving disc, never its stationary orbital anchor. */
+  filter: var(--planet-filter, none);
 }
 .globe {
   display: block;

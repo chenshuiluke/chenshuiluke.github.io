@@ -47,6 +47,7 @@ export function BigNebulas() {
         return (
           <div
             key={i}
+            data-space-decoration
             className={`${styles.bigneb} ${n.drift}`}
             style={style}
             aria-hidden

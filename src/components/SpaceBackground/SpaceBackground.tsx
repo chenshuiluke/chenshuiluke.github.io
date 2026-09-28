@@ -18,6 +18,7 @@ export function SpaceBackground() {
       {NEBULAS.map((n, i) => (
         <div
           key={i}
+          data-space-decoration
           className={styles.neb}
           style={{
             width: n.width,

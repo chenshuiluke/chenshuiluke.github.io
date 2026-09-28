@@ -36,7 +36,7 @@ export function DotStars() {
           ["--sd" as string]: `${d.sd}s`,
           ["--del" as string]: `${d.del}s`,
         } as CSSProperties;
-        return <div key={d.i} className={styles.dot} style={style} />;
+        return <div key={d.i} data-space-decoration className={styles.dot} style={style} />;
       })}
     </div>
   );

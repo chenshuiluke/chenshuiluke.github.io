@@ -11,12 +11,12 @@ import config from "../velite.config.ts";
 const require = createRequire(import.meta.url);
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 // Exercise the real TSX exports without booting Next or adding a test framework.
-function load(path, mocks = {}) {
+function load(path, mocks = {}, globals = {}) {
   const code = ts.transpileModule(read(path), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText;
   const compiled = { exports: {} };
-  runInNewContext(`(function(require, module, exports) {${code}\n})`)(
+  runInNewContext(`(function(require, module, exports) {${code}\n})`, globals)(
     (id) => mocks[id] ?? (id.endsWith(".css") || id.startsWith("@/") ? {} : require(id)),
     compiled, compiled.exports,
   );
@@ -64,9 +64,88 @@ for (const href of ["/blog", "#section", "relative-post", "mailto:test@example.c
 }
 for (const path of ["Scene/Scene.tsx", "Comets/SpaceSimulation.tsx", "svg/PixelPlanet.tsx"])
   assert(!/SkyPaused|Pause space|Resume space/.test(read(`src/components/${path}`)), "Pause machinery is removed");
-for (const name of ["AnimatedCard", "FloatingColumn", "ParallaxStars"]) {
+for (const name of ["AnimatedCard", "FloatingColumn"]) {
   const css = read(`src/components/${name}/${name}.module.css`);
   assert(/prefers-reduced-motion: reduce/.test(css) && /transform: none !important/.test(css));
 }
 console.log("Draft privacy, raw tag routes, MDX links, reduced motion and pause removal checks passed");
 assert.match(read("src/components/ScrollChapter/ScrollChapter.module.css"), /@media \(max-width: 820px\), \(max-height: 600px\)[\s\S]*?height: auto/);
+
+// Exercise the actual animation effects: off-screen/hidden work must stop and resume.
+let effect, intersection;
+const listeners = new Map();
+const events = {
+  addEventListener: (name, handler) => listeners.set(name, handler),
+  removeEventListener: (name) => listeners.delete(name),
+};
+const decorations = [{ style: {} }, { style: {} }];
+const document = { ...events, hidden: false, documentElement: { clientWidth: 390 } };
+let disconnected = false;
+const { Scene } = load("src/components/Scene/Scene.tsx", {
+  react: { useEffect: (fn) => { effect = fn; }, useRef: () => ({ current: { querySelectorAll: () => decorations } }) },
+}, {
+  document,
+  IntersectionObserver: class {
+    constructor(callback) { intersection = callback; }
+    observe() {}
+    disconnect() { disconnected = true; }
+  },
+});
+Scene({ children: null });
+const cleanupScene = effect();
+intersection(decorations.map((target, i) => ({ target, isIntersecting: i === 0 })));
+assert.equal(decorations[0].style.animationPlayState, "running");
+assert.equal(decorations[1].style.animationPlayState, "paused");
+document.hidden = true;
+listeners.get("visibilitychange")();
+assert(decorations.every((node) => node.style.animationPlayState === "paused"));
+document.hidden = false;
+listeners.get("visibilitychange")();
+assert.equal(decorations[0].style.animationPlayState, "running");
+cleanupScene();
+assert(disconnected && listeners.size === 0);
+assert(decorations.every((node) => node.style.animationPlayState === ""));
+
+const frames = new Map();
+const rectangles = [];
+const context = { clearRect() { rectangles.length = 0; }, fillRect(...rect) { rectangles.push(rect); } };
+const canvas = { getContext: () => context };
+const motion = { ...events, matches: false };
+let serial = 0;
+const globals = {
+  document, window: events, innerHeight: 844, scrollY: 0,
+  performance: { now: () => 1000 },
+  matchMedia: () => motion,
+  getComputedStyle: () => ({ getPropertyValue: () => "#fff" }),
+  requestAnimationFrame: (fn) => { frames.set(++serial, fn); return serial; },
+  cancelAnimationFrame: (id) => frames.delete(id),
+};
+const { ParallaxStars } = load("src/components/ParallaxStars/ParallaxStars.tsx", {
+  react: { useEffect: (fn) => { effect = fn; }, useRef: () => ({ current: canvas }) },
+}, globals);
+ParallaxStars();
+const cleanupStars = effect();
+assert.equal(canvas.width, 390);
+assert.equal(canvas.height, 844, "Star backing store stays viewport-sized, not 12000px tall");
+assert(rectangles.length > 0 && rectangles.length < 30, "Only visible stars are painted");
+assert.equal(frames.size, 1);
+document.hidden = true;
+listeners.get("visibilitychange")();
+assert.equal(frames.size, 0, "Hidden tab stops star animation");
+document.hidden = false;
+motion.matches = true;
+listeners.get("change")();
+assert.equal(frames.size, 0, "Reduced motion draws once without scheduling animation");
+const beforeScroll = JSON.stringify(rectangles);
+globals.scrollY = 1600;
+listeners.get("scroll")();
+assert.notEqual(JSON.stringify(rectangles), beforeScroll, "Static stars still track scrolling");
+motion.matches = false;
+listeners.get("change")();
+assert.equal(frames.size, 1, "Animation resumes without duplicate loops");
+cleanupStars();
+assert.equal(frames.size, 0);
+assert.equal(listeners.size, 0);
+for (const name of ["ChapterSky", "FloatingObject"])
+  assert(!/^\s*filter:/m.test(read(`src/components/${name}/${name}.module.css`)), "Orbital anchors must not own filter surfaces");
+console.log("Viewport star rendering, decoration culling, visibility cleanup and bounded filter checks passed");

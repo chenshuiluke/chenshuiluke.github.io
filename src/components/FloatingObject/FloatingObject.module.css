@@ -1,7 +1,7 @@
 .obj {
   position: absolute;
   z-index: 11;
-  filter: drop-shadow(0 6px 12px #03091780) drop-shadow(0 0 12px #b0ceff16);
+  --planet-filter: drop-shadow(0 6px 12px #03091780) drop-shadow(0 0 12px #b0ceff16);
   animation: objFloat var(--dur, 8s) var(--del, 0s) ease-in-out infinite
     alternate;
 }

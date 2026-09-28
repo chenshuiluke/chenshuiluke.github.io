@@ -15,7 +15,7 @@
   width: 170px;
   top: 14%;
   left: 1%;
-  filter: hue-rotate(300deg);
+  --planet-filter: hue-rotate(300deg);
 }
 .small {
   width: 88px;
@@ -28,21 +28,21 @@
   width: clamp(130px, 14vw, 200px);
   bottom: 7%;
   right: 3%;
-  filter: hue-rotate(65deg);
+  --planet-filter: hue-rotate(65deg);
   animation-duration: 21s;
   animation-delay: -6s;
 }
 .about .large {
-  filter: hue-rotate(155deg);
+  --planet-filter: hue-rotate(155deg);
 }
 .about .medium {
-  filter: hue-rotate(300deg);
+  --planet-filter: hue-rotate(300deg);
 }
 .contact .large {
-  filter: hue-rotate(65deg);
+  --planet-filter: hue-rotate(65deg);
 }
 .contact .medium {
-  filter: hue-rotate(315deg);
+  --planet-filter: hue-rotate(315deg);
 }
 @keyframes drift {
   from {

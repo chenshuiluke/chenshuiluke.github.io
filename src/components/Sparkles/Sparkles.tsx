@@ -41,6 +41,7 @@ export function Sparkles() {
         return (
           <svg
             key={i}
+            data-space-decoration
             className={styles.spark}
             style={style}
             width={s.size}

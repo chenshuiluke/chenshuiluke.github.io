@@ -23,7 +23,7 @@ export function GlowStars() {
         };
         (style as Record<string, string>)["--gd"] = s.dur;
         (style as Record<string, string>)["--gdd"] = s.delay;
-        return <div key={i} className={styles.glowStar} style={style} aria-hidden />;
+        return <div key={i} data-space-decoration className={styles.glowStar} style={style} aria-hidden />;
       })}
     </>
   );

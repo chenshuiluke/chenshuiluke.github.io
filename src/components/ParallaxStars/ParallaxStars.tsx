@@ -1,7 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useMemo } from "react";
+import { useEffect, useRef } from "react";
 import styles from "./ParallaxStars.module.css";
 
 type LayerSpec = {
@@ -42,53 +41,64 @@ function makeStars(spec: LayerSpec, totalH: number) {
   });
 }
 
+const TOTAL_HEIGHT = 12000;
+const layers = LAYERS.map((spec) => ({ spec, stars: makeStars(spec, TOTAL_HEIGHT) }));
+
 export function ParallaxStars() {
-  // Distribute over ~1100vh page = roughly 11000px on desktop. Use 12000px for safety.
-  const totalH = 12000;
-  const layers = useMemo(
-    () => LAYERS.map((s) => ({ spec: s, stars: makeStars(s, totalH) })),
-    [],
-  );
-
-  return (
-    <div className={styles.wrap} aria-hidden>
-      {layers.map(({ spec, stars }, li) => (
-        <Layer key={li} spec={spec} stars={stars} totalH={totalH} />
-      ))}
-    </div>
-  );
-}
-
-function Layer({
-  spec,
-  stars,
-  totalH,
-}: {
-  spec: LayerSpec;
-  stars: ReturnType<typeof makeStars>;
-  totalH: number;
-}) {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, totalH], [0, totalH * spec.speed]);
-
-  return (
-    <motion.div className={styles.layer} style={{ y, height: totalH, opacity: spec.opacity }}>
-      {stars.map((st) => (
-        <span
-          key={st.i}
-          className={styles.star}
-          style={
-            {
-              left: `${st.x}%`,
-              top: `${st.y}px`,
-              width: `${st.size}px`,
-              height: `${st.size}px`,
-              "--dur": `${st.dur}s`,
-              "--del": `${st.del}s`,
-            } as React.CSSProperties
-          }
-        />
-      ))}
-    </motion.div>
-  );
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const color = getComputedStyle(canvas).getPropertyValue("--star").trim() || "#fff";
+    let request = 0;
+    const draw = (now: number) => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = color;
+      for (const { spec, stars } of layers) {
+        const offset = reduced.matches ? 0 : Math.min(scrollY, TOTAL_HEIGHT) * spec.speed;
+        for (const star of stars) {
+          const y = star.y + offset - scrollY;
+          if (y < -4 || y > canvas.height + 4) continue;
+          const elapsed = Math.max(0, now / 1000 - star.del);
+          const phase = reduced.matches ? 0.5 : (1 - Math.cos(elapsed / star.dur * Math.PI)) / 2;
+          context.globalAlpha = spec.opacity * (0.25 + phase * 0.7);
+          const size = star.size * (0.8 + phase * 0.25);
+          context.fillRect(star.x / 100 * canvas.width, y, size, size);
+        }
+      }
+    };
+    const tick = (now: number) => {
+      draw(now);
+      request = requestAnimationFrame(tick);
+    };
+    const sync = () => {
+      cancelAnimationFrame(request);
+      if (document.hidden) return;
+      draw(performance.now());
+      if (!reduced.matches) request = requestAnimationFrame(tick);
+    };
+    const resize = () => {
+      // Pixel stars need CSS-pixel resolution, not a device-pixel-sized backing store.
+      canvas.width = document.documentElement.clientWidth;
+      canvas.height = innerHeight;
+      draw(performance.now());
+    };
+    const scroll = () => { if (reduced.matches) draw(0); };
+    resize();
+    sync();
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", scroll, { passive: true });
+    document.addEventListener("visibilitychange", sync);
+    reduced.addEventListener("change", sync);
+    return () => {
+      cancelAnimationFrame(request);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", scroll);
+      document.removeEventListener("visibilitychange", sync);
+      reduced.removeEventListener("change", sync);
+    };
+  }, []);
+  return <canvas ref={ref} className={styles.stars} data-parallax-stars aria-hidden="true" />;
 }

@@ -35,10 +35,20 @@ assert(
   component.includes("data-comet-fire"),
   "One shared world-space fire canvas",
 );
-assert(
-  css.includes("clip-path: inset(0 0 0 76%)"),
-  "The old painted ribbon is not rendered",
-);
+const outline = [...css.match(/clip-path: polygon\(([\s\S]*?)\);/)[1]
+  .matchAll(/([\d.]+)%\s+([\d.]+)%/g)].map((m) => [+m[1], +m[2]]);
+const insideHead = (x, y) => {
+  let inside = false;
+  for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
+    const [ax, ay] = outline[i], [bx, by] = outline[j];
+    if ((ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax)
+      inside = !inside;
+  }
+  return inside;
+};
+assert(insideHead(88, 56), "Keep the detailed nucleus");
+for (const [x, y] of [[76, 56], [80, 38], [82, 82], [90, 88]])
+  assert(!insideHead(x, y), "Exclude baked-in flame above, behind and below nucleus");
 assert(css.includes("prefers-reduced-motion"));
 let seed = 29;
 const random = () => {

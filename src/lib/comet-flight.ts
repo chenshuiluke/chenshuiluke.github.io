@@ -70,7 +70,8 @@ export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
     const pose = sampleCometFlight(flight, birth / flight.duration);
     const angle = (pose.angle * Math.PI) / 180;
     const lateral = (hash(seed + 3) - 0.5) * (spark ? 110 : 55);
-    const backward = 14 + age * (20 + hash(seed + 4) * 55);
+    // Start beneath the rear of the masked nucleus so the fire joins without a seam.
+    const backward = 8 + age * (20 + hash(seed + 4) * 55);
     const spread = (hash(seed + 5) - 0.5) * 20 + lateral * age;
     const heat = 1 - age / life;
     particles.push({

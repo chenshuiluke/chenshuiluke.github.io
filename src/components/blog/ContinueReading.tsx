@@ -14,9 +14,9 @@ export function ContinueReading({ posts }: { posts: Post[] }) {
         </Link>
       </div>
       <ul className={styles.grid}>
-        {posts.map((post, i) => (
+        {posts.map((post) => (
           <li key={post.slug}>
-            <PostCard post={post} index={i} />
+            <PostCard post={post} />
           </li>
         ))}
       </ul>

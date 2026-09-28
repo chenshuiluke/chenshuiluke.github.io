@@ -75,7 +75,7 @@ export default defineConfig({
   prepare: (data) => {
     // strip drafts in production
     if (process.env.NODE_ENV === "production") {
-      data.posts = data.posts.filter((p: any) => !p.draft);
+      data.posts = data.posts.filter((p) => !p.draft);
     }
   },
   complete: ({ posts }) => {
@@ -91,9 +91,9 @@ export default defineConfig({
       feedLinks: { rss2: `${siteUrl}/rss.xml` },
     });
     posts
-      .slice()
-      .sort((a: any, b: any) => +new Date(b.date) - +new Date(a.date))
-      .forEach((p: any) => {
+      .filter((p) => !p.draft)
+      .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+      .forEach((p) => {
         feed.addItem({
           title: p.title,
           id: `${siteUrl}${p.permalink}`,

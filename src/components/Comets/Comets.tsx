@@ -1,7 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useRef } from "react";
-import { SkyPaused } from "@/components/Scene/Scene";
+import { useEffect, useRef } from "react";
 import {
   createCometFlight,
   sampleCometFlight,
@@ -17,7 +16,6 @@ export function Comets() {
   const flights = useRef<{ path: CometFlight; age: number; width: number }[]>(
     [],
   );
-  const paused = useContext(SkyPaused);
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
@@ -74,7 +72,7 @@ export function Comets() {
     const sync = () => {
       cancelAnimationFrame(request);
       previous = 0;
-      if (!paused && !reduced.matches && !document.hidden)
+      if (!reduced.matches && !document.hidden)
         request = requestAnimationFrame(tick);
     };
     sync();
@@ -87,7 +85,7 @@ export function Comets() {
       reduced.removeEventListener("change", sync);
       window.removeEventListener("resize", reset);
     };
-  }, [paused]);
+  }, []);
 
   return (
     <div className={styles.layer} aria-hidden="true">

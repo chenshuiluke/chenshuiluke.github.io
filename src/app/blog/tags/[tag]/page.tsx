@@ -10,8 +10,8 @@ interface Params {
 }
 
 export function generateStaticParams(): Params[] {
-  const tags = new Set(posts.flatMap((p) => p.tags));
-  return Array.from(tags).map((tag) => ({ tag: encodeURIComponent(tag) }));
+  const tags = new Set(posts.filter((p) => !p.draft).flatMap((p) => p.tags));
+  return Array.from(tags).map((tag) => ({ tag }));
 }
 
 export async function generateMetadata({
@@ -21,7 +21,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { tag } = await params;
   return {
-    title: `#${decodeURIComponent(tag)} — Blog — Luke Chen Shui`,
+    title: `#${tag} — Blog — Luke Chen Shui`,
   };
 }
 
@@ -30,8 +30,7 @@ export default async function TagPage({
 }: {
   params: Promise<Params>;
 }) {
-  const { tag: rawTag } = await params;
-  const tag = decodeURIComponent(rawTag);
+  const { tag } = await params;
 
   const matched = posts
     .filter((p) => !p.draft && p.tags.includes(tag))

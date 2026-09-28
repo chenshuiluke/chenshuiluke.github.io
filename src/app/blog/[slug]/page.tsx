@@ -1,6 +1,7 @@
 import { posts } from "@/content";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { Mdx } from "@/components/blog/Mdx";
 import { TagPill } from "@/components/blog/TagPill";
@@ -45,15 +46,6 @@ function formatDate(iso: string): string {
   });
 }
 
-function coverSrc(cover: unknown): string | null {
-  if (!cover) return null;
-  if (typeof cover === "string") return cover;
-  if (typeof cover === "object" && cover && "src" in cover) {
-    return (cover as { src: string }).src;
-  }
-  return null;
-}
-
 export default async function PostPage({
   params,
 }: {
@@ -71,7 +63,7 @@ export default async function PostPage({
   const kicker = post.tags[0]
     ? `Field Notes · ${post.tags[0]}`
     : "Field Notes";
-  const cover = coverSrc(post.cover);
+  const cover = post.cover;
 
   return (
     <>
@@ -100,7 +92,7 @@ export default async function PostPage({
         {cover && (
           <figure className={styles.heroFig}>
             <div className={styles.frame}>
-              <img src={cover} alt="" />
+              <Image src={cover.src} width={cover.width} height={cover.height} alt="" />
             </div>
           </figure>
         )}

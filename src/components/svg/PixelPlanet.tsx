@@ -1,7 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useRef } from "react";
-import { SkyPaused } from "@/components/Scene/Scene";
+import { useEffect, useRef } from "react";
 import {
   paintPlanet,
   planetMaps,
@@ -17,7 +16,6 @@ const MAP_HEIGHT = 192;
 export function PixelPlanet({ kind }: { kind: PlanetKind }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const turn = useRef(kind === "volcanic" ? 0.35 : 0.08);
-  const paused = useContext(SkyPaused);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,7 +58,6 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
         !disposed &&
         texture &&
         visible &&
-        !paused &&
         !reduced.matches &&
         !document.hidden
       )
@@ -99,7 +96,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
       document.removeEventListener("visibilitychange", sync);
       image.onload = image.onerror = null;
     };
-  }, [kind, paused]);
+  }, [kind]);
 
   return (
     <span

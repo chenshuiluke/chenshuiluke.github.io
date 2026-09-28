@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "npm"
 
       - name: Setup Pages
@@ -34,6 +34,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Lint and test
+        run: npm run lint && npm test
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

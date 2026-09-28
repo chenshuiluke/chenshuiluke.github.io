@@ -22,6 +22,14 @@
   margin-bottom: 0.7rem;
 }
 
+@media (prefers-reduced-motion: reduce), (max-width: 820px), (max-height: 600px) {
+  .card {
+    transform: none !important;
+    opacity: 1 !important;
+    will-change: auto;
+  }
+}
+
 .dot {
   width: 32px;
   height: 32px;

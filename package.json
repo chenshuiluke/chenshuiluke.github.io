@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "velite && next dev",
     "dev:content": "velite --watch",
-    "build": "velite && next build",
+    "build": "node scripts/build-content.mjs && next build --webpack",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "test": "node scripts/check-comet.mjs && node scripts/check-pixel-planets.mjs && node scripts/check-spacecraft.mjs && node scripts/check-quality.mjs"
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.1.1",

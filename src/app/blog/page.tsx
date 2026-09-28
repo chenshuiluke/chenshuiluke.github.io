@@ -50,9 +50,9 @@ export default function BlogIndex() {
       </div>
 
       <ul className={styles.grid}>
-        {sorted.map((post, i) => (
+        {sorted.map((post) => (
           <li key={post.slug}>
-            <PostCard post={post} index={i} />
+            <PostCard post={post} />
           </li>
         ))}
       </ul>

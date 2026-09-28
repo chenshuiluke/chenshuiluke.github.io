@@ -2,16 +2,19 @@
 
 Personal site — Next.js 16.2 App Router, static export to GitHub Pages.
 
+Use Node.js 24 (also used by CI).
+
 ```bash
 npm install
 npm run dev       # http://localhost:3000
 npm run build     # static site -> out/
-npm run start
+npm run lint
+npm test
 ```
 
 ## Blog
 
-MDX posts live in `content/blog/`. Velite (`velite.config.ts`) validates frontmatter, compiles MDX, and emits typed data to `.velite/`. Build pipeline runs `velite && next build`.
+MDX posts live in `content/blog/`. Velite (`velite.config.ts`) validates frontmatter, compiles MDX, and emits typed data to `.velite/`. The build script sets production mode before generating content, then exports the site with Next's webpack builder. Drafts are excluded from production content and always excluded from RSS. MDX is trusted repository content, rendered server-side; embed interactive behavior in imported client components rather than hooks in the MDX body.
 
 ### Authoring workflow
 

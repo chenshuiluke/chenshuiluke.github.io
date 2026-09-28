@@ -1,8 +1,9 @@
-type Point = { x: number; y: number };
+import type { GravityBody } from "./gravity";
+type TrailSample = { x: number; y: number; angle: number; time: number };
 export type CometFlight = {
-  start: Point;
-  control: Point;
-  end: Point;
+  body: GravityBody;
+  trail: TrailSample[];
+  age: number;
   duration: number;
   hue: number;
 };
@@ -11,40 +12,45 @@ export function createCometFlight(
   width: number,
   height: number,
   random = Math.random,
+  scroll = 0,
 ): CometFlight {
   const edge = Math.floor(random() * 4);
-  const endEdge = (edge + 1 + Math.floor(random() * 3)) % 4;
-  const point = (side: number): Point => {
-    const position = 0.1 + random() * 0.8;
-    if (side === 0) return { x: width * position, y: -300 };
-    if (side === 1) return { x: width + 300, y: height * position };
-    if (side === 2) return { x: width * position, y: height + 300 };
-    return { x: -300, y: height * position };
-  };
+  const position = 0.1 + random() * 0.8;
+  const x = edge === 1 ? width + 160 : edge === 3 ? -160 : width * position;
+  const y = scroll + (edge === 0 ? -160 : edge === 2 ? height + 160 : height * position);
+  const dx = width * (0.15 + random() * 0.7) - x;
+  const dy = scroll + height * (0.15 + random() * 0.7) - y;
+  const speed = 150 + random() * 130;
+  const length = Math.hypot(dx, dy);
+  const body = { x, y, vx: dx / length * speed, vy: dy / length * speed, mass: 0.15 };
   return {
-    start: point(edge),
-    end: point(endEdge),
-    control: {
-      x: width * (0.15 + random() * 0.7),
-      y: height * (0.15 + random() * 0.7),
-    },
-    duration: 4.5 + random() * 2.5,
+    body,
+    trail: [{ x, y, angle: Math.atan2(dy, dx) * 180 / Math.PI, time: 0 }],
+    age: 0,
+    duration: Infinity,
     hue: [0, 20, 35, 180, 265, 320][Math.floor(random() * 6)],
   };
 }
 
-export function sampleCometFlight(flight: CometFlight, t: number) {
-  const { start: a, control: b, end: c } = flight;
-  const point = (u: number) => ({
-    x: (1 - u) ** 2 * a.x + 2 * (1 - u) * u * b.x + u * u * c.x,
-    y: (1 - u) ** 2 * a.y + 2 * (1 - u) * u * b.y + u * u * c.y,
-  });
-  const position = point(t);
-  const dx = 2 * ((1 - t) * (b.x - a.x) + t * (c.x - b.x));
-  const dy = 2 * ((1 - t) * (b.y - a.y) + t * (c.y - b.y));
+export function recordCometTrail(flight: CometFlight) {
+  const { x, y, vx, vy } = flight.body;
+  flight.trail.push({ x, y, angle: Math.atan2(vy, vx) * 180 / Math.PI, time: flight.age });
+  while (flight.trail.length > 2 && flight.trail[1].time < flight.age - 1.4)
+    flight.trail.shift();
+}
+
+export function sampleCometFlight(flight: CometFlight, time: number) {
+  const samples = flight.trail;
+  // Uniform physics ticks: direct lookup instead of searching the history per ember.
+  const step = samples.length > 1 ? samples[1].time - samples[0].time : 1;
+  const index = Math.max(0, Math.min(samples.length - 1, Math.floor((time - samples[0].time) / step)));
+  const a = samples[index], b = samples[Math.min(index + 1, samples.length - 1)];
+  const t = a === b ? 0 : Math.max(0, Math.min(1, (time - a.time) / (b.time - a.time)));
+  const angle = ((b.angle - a.angle + 540) % 360) - 180;
   return {
-    ...position,
-    angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    angle: a.angle + angle * t,
   };
 }
 
@@ -67,7 +73,7 @@ export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
       : 0.22 + hash(seed + 1) * 0.55;
     const age = seconds - birth;
     if (age < 0 || age >= life) continue;
-    const pose = sampleCometFlight(flight, birth / flight.duration);
+    const pose = sampleCometFlight(flight, birth);
     const angle = (pose.angle * Math.PI) / 180;
     const lateral = (hash(seed + 3) - 0.5) * (spark ? 110 : 55);
     // Start beneath the rear of the masked nucleus so the fire joins without a seam.

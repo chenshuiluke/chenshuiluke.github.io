@@ -5,9 +5,11 @@ import { readFileSync } from "node:fs";
 import {
   createCometFlight,
   sampleCometFlight,
+  recordCometTrail,
   cometEmbers,
   drawCometFire,
 } from "../src/lib/comet-flight.ts";
+import { stepGravity, PHYSICS_STEP } from "../src/lib/gravity.ts";
 const require = createRequire(import.meta.url);
 const sharp = require(
   require.resolve("sharp", { paths: [require.resolve("next/package.json")] }),
@@ -24,7 +26,7 @@ assert(
   "Head artwork keeps transparent corners",
 );
 const component = readFileSync(
-  new URL("../src/components/Comets/Comets.tsx", import.meta.url),
+  new URL("../src/components/Comets/SpaceSimulation.tsx", import.meta.url),
   "utf8",
 );
 const css = readFileSync(
@@ -60,28 +62,33 @@ for (let i = 0; i < 300; i++) {
   const f = createCometFlight(390, 844, random);
   const edge = (p) =>
     p.y < 0 ? "top" : p.x > 390 ? "right" : p.y > 844 ? "bottom" : "left";
-  edges.add(edge(f.start));
-  assert.notEqual(edge(f.start), edge(f.end));
-  const mid = sampleCometFlight(f, 0.5),
-    next = sampleCometFlight(f, 0.50001);
-  const heading = (Math.atan2(next.y - mid.y, next.x - mid.x) * 180) / Math.PI;
-  assert(
-    Math.abs(((heading - mid.angle + 540) % 360) - 180) < 0.1,
-    "Head follows curve tangent",
-  );
-  for (const p of cometEmbers(f, 2)) {
+  edges.add(edge(f.body));
+  assert((195 - f.body.x) * f.body.vx + (422 - f.body.y) * f.body.vy > 0, "Comets launch inward");
+  for (let tick = 0; tick < 240; tick++) {
+    stepGravity([f.body], PHYSICS_STEP);
+    f.age += PHYSICS_STEP;
+    recordCometTrail(f);
+  }
+  assert(f.trail.length <= 171, "History is bounded");
+  for (const p of cometEmbers(f, f.age)) {
     assert(Number.isFinite(p.x) && Number.isFinite(p.y));
     assert(p.alpha >= 0 && p.alpha <= 1 && p.size >= 1);
   }
 }
 assert.equal(edges.size, 4);
-const f = {
-  start: { x: 0, y: 240 },
-  control: { x: 280, y: -200 },
-  end: { x: 550, y: 250 },
-  duration: 4,
-  hue: 20,
-};
+const f = createCometFlight(550, 400, random);
+f.body = { x: 0, y: 240, vx: 180, vy: -100, mass: 0.15 };
+f.trail = [];
+recordCometTrail(f);
+const planet = { x: 280, y: 0, vx: 0, vy: 0, mass: 1000 };
+for (let tick = 0; tick < 120; tick++) {
+  stepGravity([planet, f.body], PHYSICS_STEP);
+  f.age += PHYSICS_STEP;
+  recordCometTrail(f);
+}
+const pose = sampleCometFlight(f, f.age);
+assert(Math.hypot(pose.x - f.body.x, pose.y - f.body.y) < 1e-6, "Tail samples the integrated head, not a preset arc");
+f.duration = f.age;
 const frames = [0.55, 0.6, 0.65].map((t) => cometEmbers(f, t));
 const survivor = frames[2].find((p) =>
   frames[0].some((q) => p.serial === q.serial),
@@ -129,5 +136,5 @@ assert(
 assert.equal(ctx.globalAlpha, 1);
 assert.equal(ctx.globalCompositeOperation, "source-over");
 console.log(
-  "World-space embers, independent velocity, fade, bounded lifetime, randomized arcs and accessibility checks passed",
+  "Gravity trajectory history, world-space embers, fade, bounded lifetime and accessibility checks passed",
 );

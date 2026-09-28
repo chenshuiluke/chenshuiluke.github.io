@@ -4,6 +4,12 @@ Personal site — Next.js 16.2 App Router, static export to GitHub Pages.
 
 Use Node.js 24 (also used by CI).
 
+## Space simulation
+
+Planets, moons, and comets share a 2D, softened Newtonian gravity simulation (`src/lib/gravity.ts`). Mass scales with the planet artwork's area. A fixed 120 Hz velocity-Verlet step drives motion independently of rendering; initial orbital velocities are starting conditions, not enforced paths. Close encounters and escapes are allowed. There are no collision/merger rules or relativistic effects, and distances/masses use artistic units.
+
+Scrolling moves the camera through document-space bodies. Escaped comets are recycled only beyond the world bounds; captured comets keep orbiting. Resizing the page width re-seeds the layout, while phone browser-chrome height changes do not. Reduced motion disables the simulation. Fiery trails are emitted from recorded physical positions, with ballistic embers that fade independently. Stars and nebulae remain decorative backgrounds, not massive bodies.
+
 ```bash
 npm install
 npm run dev       # http://localhost:3000

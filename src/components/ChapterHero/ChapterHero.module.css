@@ -4,7 +4,7 @@
   height: 100vh;
   height: 100svh;
   min-height: 650px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Keep the opening sky rich even though the main starfield spans every chapter. */

@@ -10,6 +10,7 @@ export function ChapterSky({
     <div
       className={`${styles.sky} ${styles[chapter]}`}
       data-chapter-sky={chapter}
+      data-gravity-system
       aria-hidden="true"
     >
       <div className={`${styles.orb} ${styles.large}`}>

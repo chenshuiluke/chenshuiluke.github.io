@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Comets } from "@/components/Comets/Comets";
+import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
 import { DotStars } from "@/components/DotStars/DotStars";
 import { Footer } from "@/components/Footer/Footer";
 import { Nav } from "@/components/Nav/Nav";
@@ -15,7 +15,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <ParallaxStars />
       <DotStars />
       <Sparkles />
-      <Comets />
+      <SpaceSimulation />
       <Nav />
       {children}
       <Footer />

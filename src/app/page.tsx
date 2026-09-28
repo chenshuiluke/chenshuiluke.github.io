@@ -4,7 +4,7 @@ import { Avatar } from "@/components/Avatar/Avatar";
 import { BigNebulas } from "@/components/BigNebulas/BigNebulas";
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
 import { ChapterSky } from "@/components/ChapterSky/ChapterSky";
-import { Comets } from "@/components/Comets/Comets";
+import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
 import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
 import { DotStars } from "@/components/DotStars/DotStars";
 import { FloatingColumn } from "@/components/FloatingColumn/FloatingColumn";
@@ -38,15 +38,15 @@ export default function Home() {
       <SpaceBackground />
       <BigNebulas />
       <AuroraRibbons />
-      <MoonPhase />
       <GlowStars />
       <ParallaxStars />
       <DotStars />
       <Sparkles />
-      <Comets />
+      <SpaceSimulation />
       <Nav />
 
       <ChapterHero>
+        <MoonPhase />
         <DistantPlanet />
         <Avatar />
         <Hero />

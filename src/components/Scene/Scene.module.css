@@ -2,4 +2,14 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
+  overflow: clip;
+}
+
+/* Gravity owns translation; keep texture rotation and glints, not scripted drift. */
+.scene[data-gravity-active="true"] :has(> [data-planet]) {
+  animation: none !important;
+  transform: none !important;
+}
+.scene [data-planet] {
+  pointer-events: none;
 }

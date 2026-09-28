@@ -62,7 +62,7 @@ for (const href of ["/blog", "#section", "relative-post", "mailto:test@example.c
   assert(html.includes('title="Kept"') && html.includes('aria-label="Accessible"'));
   assert.equal(html.includes('target="_blank"'), /^(https?:)?\/\//.test(href), "Only external web links open another tab");
 }
-for (const path of ["Scene/Scene.tsx", "Comets/Comets.tsx", "svg/PixelPlanet.tsx"])
+for (const path of ["Scene/Scene.tsx", "Comets/SpaceSimulation.tsx", "svg/PixelPlanet.tsx"])
   assert(!/SkyPaused|Pause space|Resume space/.test(read(`src/components/${path}`)), "Pause machinery is removed");
 for (const name of ["AnimatedCard", "FloatingColumn", "ParallaxStars"]) {
   const css = read(`src/components/${name}/${name}.module.css`);

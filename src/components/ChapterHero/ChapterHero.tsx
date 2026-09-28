@@ -3,7 +3,7 @@ import styles from "./ChapterHero.module.css";
 
 export function ChapterHero({ children }: { children: ReactNode }) {
   return (
-    <div className={styles.hero}>
+    <div className={styles.hero} data-gravity-system>
       <svg
         className={styles.aurora}
         viewBox="0 0 1440 900"

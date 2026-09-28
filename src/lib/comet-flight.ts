@@ -13,14 +13,18 @@ export function createCometFlight(
   height: number,
   random = Math.random,
   scroll = 0,
+  planets: GravityBody[] = [],
 ): CometFlight {
   const edge = Math.floor(random() * 4);
   const position = 0.1 + random() * 0.8;
-  const x = edge === 1 ? width + 160 : edge === 3 ? -160 : width * position;
-  const y = scroll + (edge === 0 ? -160 : edge === 2 ? height + 160 : height * position);
-  const dx = width * (0.15 + random() * 0.7) - x;
-  const dy = scroll + height * (0.15 + random() * 0.7) - y;
-  const speed = 150 + random() * 130;
+  const x = edge === 1 ? width + 48 : edge === 3 ? -48 : width * position;
+  const y = scroll + (edge === 0 ? -48 : edge === 2 ? height + 48 : height * position);
+  const nearby = planets.filter((p) => p.mass > 30 && p.x > 0 && p.x < width && p.y > scroll && p.y < scroll + height);
+  const target = nearby.length ? nearby[Math.floor(random() * nearby.length)] : null;
+  // Aim the initial velocity near a planet; gravity alone determines the subsequent arc.
+  const dx = (target ? target.x + (random() - 0.5) * 180 : width * (0.15 + random() * 0.7)) - x;
+  const dy = (target ? target.y + (random() - 0.5) * 180 : scroll + height * (0.15 + random() * 0.7)) - y;
+  const speed = 90 + random() * 60;
   const length = Math.hypot(dx, dy);
   const body = { x, y, vx: dx / length * speed, vy: dy / length * speed, mass: 0.15 };
   return {
@@ -59,40 +63,50 @@ const hash = (n: number) => {
   return value - Math.floor(value);
 };
 
+function birthEmber(flight: CometFlight, serial: number) {
+  const birth = serial / 240;
+  const seed = serial + flight.hue * 13;
+  const spark = hash(seed + 2) > 0.78;
+  const life = spark ? 0.65 + hash(seed + 1) * 0.65 : 0.22 + hash(seed + 1) * 0.55;
+  const pose = sampleCometFlight(flight, birth);
+  const angle = pose.angle * Math.PI / 180;
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  const lateral = (hash(seed + 3) - 0.5) * (spark ? 110 : 55);
+  const backward = 20 + hash(seed + 4) * 55;
+  const spread = (hash(seed + 5) - 0.5) * 20;
+  return {
+    birth, spark, life, x: pose.x, y: pose.y,
+    offsetX: -cos * 8 - sin * spread, offsetY: -sin * 8 + cos * spread,
+    vx: -cos * backward - sin * lateral, vy: -sin * backward + cos * lateral,
+    size: 8 + hash(seed + 6) * 10,
+  };
+}
+const emberCaches = new WeakMap<CometFlight, Map<number, ReturnType<typeof birthEmber>>>();
+
 // Each ember is born at a past head position. Its velocity never follows later turns.
 export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
   const particles = [];
   const latest = Math.floor(seconds * 240);
+  let cache = emberCaches.get(flight);
+  if (!cache) { cache = new Map(); emberCaches.set(flight, cache); }
+  for (const serial of cache.keys())
+    if (serial < latest - 312 || serial > latest) cache.delete(serial);
   for (let serial = Math.max(0, latest - 312); serial <= latest; serial++) {
     const birth = serial / 240;
     if (birth > flight.duration) continue;
-    const seed = serial + flight.hue * 13;
-    const spark = hash(seed + 2) > 0.78;
-    const life = spark
-      ? 0.65 + hash(seed + 1) * 0.65
-      : 0.22 + hash(seed + 1) * 0.55;
+    let ember = cache.get(serial);
+    if (!ember) { ember = birthEmber(flight, serial); cache.set(serial, ember); }
+    const { spark, life } = ember;
     const age = seconds - birth;
     if (age < 0 || age >= life) continue;
-    const pose = sampleCometFlight(flight, birth);
-    const angle = (pose.angle * Math.PI) / 180;
-    const lateral = (hash(seed + 3) - 0.5) * (spark ? 110 : 55);
-    // Start beneath the rear of the masked nucleus so the fire joins without a seam.
-    const backward = 8 + age * (20 + hash(seed + 4) * 55);
-    const spread = (hash(seed + 5) - 0.5) * 20 + lateral * age;
     const heat = 1 - age / life;
     particles.push({
       serial,
-      x:
-        pose.x -
-        Math.cos(angle) * backward * scale -
-        Math.sin(angle) * spread * scale,
-      y:
-        pose.y -
-        Math.sin(angle) * backward * scale +
-        Math.cos(angle) * spread * scale,
+      x: ember.x + (ember.offsetX + ember.vx * age) * scale,
+      y: ember.y + (ember.offsetY + ember.vy * age) * scale,
       size: spark
         ? Math.max(1, 2 * scale)
-        : Math.max(1, (8 + hash(seed + 6) * 10) * heat * scale),
+        : Math.max(1, ember.size * heat * scale),
       alpha: spark ? heat ** 1.4 : heat * 0.65,
       heat,
       spark,
@@ -104,17 +118,27 @@ export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
 export function emberColor(hue: number, heat: number) {
   return `hsl(${hue + heat * 35} 100% ${42 + heat ** 3 * 48}%)`;
 }
+const palettes = new Map<number, string[]>();
 
 export function drawCometFire(
   context: CanvasRenderingContext2D,
   flight: CometFlight,
   seconds: number,
   scale: number,
+  viewport?: { top: number; bottom: number; left: number; right: number },
 ) {
+  // Keep simulating offscreen bodies, but don't spend canvas work on invisible fire.
+  if (viewport && !flight.trail.some((p) => p.x > viewport.left - 200 && p.x < viewport.right + 200 && p.y > viewport.top - 200 && p.y < viewport.bottom + 200)) return;
+  let palette = palettes.get(flight.hue);
+  if (!palette) {
+    palette = Array.from({ length: 64 }, (_, i) => emberColor(flight.hue, i / 63));
+    palettes.set(flight.hue, palette);
+  }
   context.globalCompositeOperation = "lighter";
   for (const ember of cometEmbers(flight, seconds, scale)) {
+    if (viewport && (ember.x < viewport.left - ember.size || ember.x > viewport.right + ember.size || ember.y < viewport.top - ember.size || ember.y > viewport.bottom + ember.size)) continue;
     context.globalAlpha = ember.alpha;
-    context.fillStyle = emberColor(flight.hue, ember.heat);
+    context.fillStyle = palette[Math.min(63, Math.floor(ember.heat * 63))];
     const size = Math.max(1, Math.round(ember.size));
     context.fillRect(
       Math.round(ember.x - size / 2),

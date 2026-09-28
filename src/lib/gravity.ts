@@ -7,7 +7,7 @@ export type GravityBody = {
 };
 
 // Artistic pixel/second units, not astronomical scale. Softening avoids singularities.
-export const GRAVITY = 150;
+export const GRAVITY = 1200;
 export const SOFTENING = 32;
 export const PHYSICS_STEP = 1 / 120;
 

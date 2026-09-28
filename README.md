@@ -10,6 +10,8 @@ Planets, moons, and comets share a 2D, softened Newtonian gravity simulation (`s
 
 Scrolling moves the camera through document-space bodies. Escaped comets are recycled only beyond the world bounds; captured comets keep orbiting. Resizing the page width re-seeds the layout, while phone browser-chrome height changes do not. Reduced motion disables the simulation. Fiery trails are emitted from recorded physical positions, with ballistic embers that fade independently. Stars and nebulae remain decorative backgrounds, not massive bodies.
 
+Space artwork is served from `public/space/` at canvas resolution (384×192 terrain, 192×64 comet), losslessly encoded. Run `npm run assets:space` after changing the original artwork. Visible planets share decoded textures and sphere projections; offscreen planets defer initialization. Layout anchors are cached until scrolling/resizing, and comet emission data is reused across frames. `npm run bench:space` measures renderer CPU work only, not browser/GPU frame rate.
+
 ```bash
 npm install
 npm run dev       # http://localhost:3000

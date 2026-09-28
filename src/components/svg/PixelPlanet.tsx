@@ -12,6 +12,36 @@ import styles from "./SpaceObjects.module.css";
 const SIZE = 96;
 const MAP_WIDTH = 384;
 const MAP_HEIGHT = 192;
+const projections = {
+  planet: spherePixels(SIZE),
+  moon: spherePixels(SIZE, true),
+};
+const textures = new Map<PlanetKind, Promise<Uint8ClampedArray>>();
+
+function loadTexture(kind: PlanetKind) {
+  let loading = textures.get(kind);
+  if (!loading) {
+    loading = new Promise<Uint8ClampedArray>((resolve, reject) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.onload = () => {
+        try {
+          const map = document.createElement("canvas");
+          map.width = MAP_WIDTH;
+          map.height = MAP_HEIGHT;
+          const context = map.getContext("2d", { willReadFrequently: true });
+          if (!context) { reject(new Error("Planet texture canvas unavailable")); return; }
+          context.drawImage(image, 0, 0);
+          resolve(context.getImageData(0, 0, MAP_WIDTH, MAP_HEIGHT).data);
+        } catch (error) { reject(error); }
+      };
+      image.onerror = () => reject(new Error("Planet texture failed to load"));
+      image.src = planetMaps[kind];
+    }).catch((error) => { textures.delete(kind); throw error; });
+    textures.set(kind, loading);
+  }
+  return loading;
+}
 
 export function PixelPlanet({ kind }: { kind: PlanetKind }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -21,7 +51,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-    const pixels = spherePixels(SIZE, kind === "moon");
+    const pixels = projections[kind === "moon" ? "moon" : "planet"];
     const frame = context.createImageData(SIZE, SIZE);
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     let texture: Uint8ClampedArray | undefined;
@@ -29,6 +59,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     let previous = 0;
     let visible = false;
     let disposed = false;
+    let loading = false;
     const draw = () => {
       if (!texture) return;
       paintPlanet(
@@ -40,8 +71,6 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
         turn.current,
       );
       context.putImageData(frame, 0, 0);
-      canvas.dataset.rotation = turn.current.toFixed(5);
-      canvas.dataset.ready = "true";
     };
     const tick = (now: number) => {
       if (previous)
@@ -65,36 +94,29 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     };
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
+      if (visible && !loading) {
+        loading = true;
+        loadTexture(kind).then((data) => {
+          if (disposed) return;
+          texture = data;
+          draw();
+          canvas.dataset.ready = "true";
+          sync();
+        }).catch(() => {
+          if (!disposed) { canvas.dataset.ready = "error"; loading = false; }
+        });
+      }
       sync();
     });
     observer.observe(canvas);
     reduced.addEventListener("change", sync);
     document.addEventListener("visibilitychange", sync);
-    const image = new Image();
-    image.onload = () => {
-      if (disposed) return;
-      const map = document.createElement("canvas");
-      map.width = MAP_WIDTH;
-      map.height = MAP_HEIGHT;
-      const mapContext = map.getContext("2d", { willReadFrequently: true });
-      if (!mapContext) return;
-      mapContext.imageSmoothingEnabled = false;
-      mapContext.drawImage(image, 0, 0, MAP_WIDTH, MAP_HEIGHT);
-      texture = mapContext.getImageData(0, 0, MAP_WIDTH, MAP_HEIGHT).data;
-      draw();
-      sync();
-    };
-    image.onerror = () => {
-      canvas.dataset.ready = "error";
-    };
-    image.src = planetMaps[kind];
     return () => {
       disposed = true;
       cancelAnimationFrame(request);
       observer.disconnect();
       reduced.removeEventListener("change", sync);
       document.removeEventListener("visibilitychange", sync);
-      image.onload = image.onerror = null;
     };
   }, [kind]);
 

@@ -15,12 +15,13 @@ const sharp = require(
   require.resolve("sharp", { paths: [require.resolve("next/package.json")] }),
 );
 const { data, info } = await sharp(
-  fileURLToPath(new URL("../public/comet-pixel.webp", import.meta.url)),
+  fileURLToPath(new URL("../public/space/comet-pixel.webp", import.meta.url)),
 )
   .ensureAlpha()
   .raw()
   .toBuffer({ resolveWithObject: true });
 assert.equal(info.width / info.height, 3);
+assert.equal(info.width, 192, "Download sprite at its actual canvas resolution");
 assert(
   data[3] <= 2 && data[data.length - 1] <= 2,
   "Head artwork keeps transparent corners",
@@ -135,6 +136,9 @@ assert(
 );
 assert.equal(ctx.globalAlpha, 1);
 assert.equal(ctx.globalCompositeOperation, "source-over");
+const visibleDraws = draws;
+drawCometFire(ctx, f, 1, 1, { left: 10000, right: 11000, top: 10000, bottom: 11000 });
+assert.equal(draws, visibleDraws, "Offscreen comets do not issue canvas draws");
 console.log(
   "Gravity trajectory history, world-space embers, fade, bounded lifetime and accessibility checks passed",
 );

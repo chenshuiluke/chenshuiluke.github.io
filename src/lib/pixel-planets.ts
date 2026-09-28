@@ -1,9 +1,9 @@
 export const planetMaps = {
-  ocean: "/planet-ocean-map.webp",
-  volcanic: "/planet-lava-map.webp",
-  gold: "/planet-gold-map.webp",
-  jade: "/planet-jade-map.webp",
-  moon: "/moon-silver-map.webp",
+  ocean: "/space/planet-ocean-map.webp",
+  volcanic: "/space/planet-lava-map.webp",
+  gold: "/space/planet-gold-map.webp",
+  jade: "/space/planet-jade-map.webp",
+  moon: "/space/moon-silver-map.webp",
 };
 export type PlanetKind = keyof typeof planetMaps;
 
@@ -41,8 +41,10 @@ export function paintPlanet(
   pixels: ReturnType<typeof spherePixels>,
   turn: number,
 ) {
+  const longitude = ((turn % 1) + 1) % 1;
   for (const { offset, u, v, light } of pixels) {
-    const x = Math.floor(((((u + turn) % 1) + 1) % 1) * width);
+    let x = Math.floor((u + longitude) * width);
+    if (x >= width) x -= width;
     const y = Math.min(height - 1, Math.floor(v * height));
     const source = (y * width + x) * 4;
     // Shared plum night-side colors keep all the worlds in one palette.

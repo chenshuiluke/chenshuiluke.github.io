@@ -73,6 +73,15 @@ for (const file of Object.values(planetMaps))
     readFileSync(new URL("../public" + file, import.meta.url)).length > 10000,
     "Terrain asset exists",
   );
+let textureBytes = 0;
+for (const file of Object.values(planetMaps)) {
+  const buffer = readFileSync(new URL("../public" + file, import.meta.url));
+  const metadata = await sharp(buffer).metadata();
+  assert.equal(metadata.width, 384);
+  assert.equal(metadata.height, 192);
+  textureBytes += buffer.length;
+}
+assert(textureBytes < 800000, "All terrain downloads together stay below 800 KB");
 const css = readFileSync(
   new URL(
     "../src/components/FloatingObject/FloatingObject.module.css",

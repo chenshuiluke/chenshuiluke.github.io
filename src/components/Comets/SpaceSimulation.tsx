@@ -21,9 +21,11 @@ export function SpaceSimulation() {
     const scene = canvas.closest<HTMLElement>("[data-space-scene]");
     if (!scene) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    let request = 0, previous = 0, accumulated = 0, worldHeight = 0;
-    let planets: { node: HTMLElement; body: GravityBody; tx: number; ty: number }[] = [];
+    let request = 0, previous = 0, accumulated = 0, worldHeight = 0, lastDiagnostic = 0;
+    let anchorsDirty = true;
+    let planets: { node: HTMLElement; body: GravityBody; tx: number; ty: number; anchorX: number; anchorY: number }[] = [];
     let flights: { path: CometFlight; delay: number; width: number }[] = [];
+    const spawn = () => createCometFlight(canvas.width, canvas.height, Math.random, scrollY, planets.map((p) => p.body));
     const reset = () => {
       planets.forEach(({ node }) => { node.style.translate = ""; });
       scene.dataset.gravityActive = String(!reduced.matches);
@@ -39,15 +41,16 @@ export function SpaceSimulation() {
         const members = groups.get(group) ?? [];
         members.push(body);
         groups.set(group, members);
-        return { node, body, tx: 0, ty: 0 };
+        return { node, body, tx: 0, ty: 0, anchorX: body.x, anchorY: body.y };
       });
       groups.forEach(seedOrbits);
       flights = nodes.current.slice(0, canvas.width <= 540 ? 4 : 6).map((node, i) => ({
-        path: createCometFlight(canvas.width, canvas.height, Math.random, scrollY),
+        path: spawn(),
         delay: i * 0.9,
         width: node?.offsetWidth || 240,
       }));
       accumulated = 0;
+      anchorsDirty = true;
       nodes.current.forEach((node) => {
         if (node) node.style.opacity = "0";
       });
@@ -70,23 +73,25 @@ export function SpaceSimulation() {
             if (path.age > 2 && (x < -600 || x > canvas.width + 600 || y < -900 || y > worldHeight + 900))
               path.duration = path.age;
           } else if (path.age > path.duration + 1.4) {
-            flight.path = createCometFlight(canvas.width, canvas.height, Math.random, scrollY);
+            flight.path = spawn();
             flight.delay = 0.7 + Math.random() * 1.8;
           }
         });
         accumulated -= PHYSICS_STEP;
       }
-      // Read anchors together, then write transforms. Scrolling moves the camera, not bodies.
-      const anchors = planets.map(({ node, tx, ty }) => {
-        const rect = node.getBoundingClientRect();
-        return { x: rect.x + rect.width / 2 - tx, y: rect.y + rect.height / 2 - ty };
-      });
-      planets.forEach((planet, i) => {
-        planet.tx = planet.body.x - anchors[i].x;
-        planet.ty = planet.body.y - scrollY - anchors[i].y;
+      // Layout is stable between scroll/resize events: don't measure 15 elements every frame.
+      if (anchorsDirty) {
+        planets.forEach((planet) => {
+          const rect = planet.node.getBoundingClientRect();
+          planet.anchorX = rect.x + rect.width / 2 - planet.tx;
+          planet.anchorY = rect.y + rect.height / 2 + scrollY - planet.ty;
+        });
+        anchorsDirty = false;
+      }
+      planets.forEach((planet) => {
+        planet.tx = planet.body.x - planet.anchorX;
+        planet.ty = planet.body.y - planet.anchorY;
         planet.node.style.translate = `${planet.tx}px ${planet.ty}px`;
-        planet.node.dataset.gravityX = planet.body.x.toFixed(2);
-        planet.node.dataset.gravityY = planet.body.y.toFixed(2);
       });
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.save();
@@ -99,19 +104,23 @@ export function SpaceSimulation() {
           node.style.opacity = "0";
           return;
         }
-        drawCometFire(context, flight.path, flight.path.age, flight.width / 192);
+        drawCometFire(context, flight.path, flight.path.age, flight.width / 192, { top: scrollY, bottom: scrollY + canvas.height, left: 0, right: canvas.width });
         const { x, y, vx, vy } = flight.path.body;
         const angle = Math.atan2(vy, vx) * 180 / Math.PI;
         node.style.transform = `translate3d(${x}px, ${y - scrollY}px, 0) rotate(${angle}deg) translate(-86%, -56%)`;
         node.style.opacity = flight.path.age < flight.path.duration ? "0.95" : "0";
-        node.style.filter = `sepia(1) saturate(4) hue-rotate(${flight.path.hue - 25}deg)`;
-        node.dataset.heading = angle.toFixed(2);
+        if (node.dataset.hue !== String(flight.path.hue)) {
+          node.style.filter = `sepia(1) saturate(4) hue-rotate(${flight.path.hue - 25}deg)`;
+          node.dataset.hue = String(flight.path.hue);
+        }
         visibleFlights++;
       });
       context.restore();
-      canvas.dataset.frame = now.toFixed(1);
-      canvas.dataset.flights = String(visibleFlights);
-      canvas.dataset.gravityBodies = String(planets.length + visibleFlights);
+      if (now - lastDiagnostic >= 250) {
+        canvas.dataset.frame = now.toFixed(1);
+        canvas.dataset.gravityBodies = String(planets.length + visibleFlights);
+        lastDiagnostic = now;
+      }
       request = requestAnimationFrame(tick);
     };
     const sync = () => {
@@ -124,17 +133,24 @@ export function SpaceSimulation() {
       // Mobile browser chrome changes height while scrolling: don't restart the universe.
       if (canvas.width !== document.documentElement.clientWidth) reset();
       canvas.height = innerHeight;
+      anchorsDirty = true;
     };
+    const moved = () => { anchorsDirty = true; };
+    const layoutObserver = new ResizeObserver(() => { anchorsDirty = true; worldHeight = scene.offsetHeight; });
+    layoutObserver.observe(scene);
     const motionChanged = () => { reset(); sync(); };
     sync();
     document.addEventListener("visibilitychange", sync);
     reduced.addEventListener("change", motionChanged);
     window.addEventListener("resize", resize);
+    window.addEventListener("scroll", moved, { passive: true });
     return () => {
       cancelAnimationFrame(request);
       document.removeEventListener("visibilitychange", sync);
       reduced.removeEventListener("change", motionChanged);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", moved);
+      layoutObserver.disconnect();
       planets.forEach(({ node }) => { node.style.translate = ""; });
       delete scene.dataset.gravityActive;
     };
@@ -142,6 +158,7 @@ export function SpaceSimulation() {
 
   return (
     <div className={styles.layer} aria-hidden="true">
+      <link rel="preload" as="image" href="/space/comet-pixel.webp" />
       <canvas ref={canvasRef} className={styles.fire} data-comet-fire />
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <span
@@ -154,7 +171,7 @@ export function SpaceSimulation() {
         >
           <PixelSprite
             className={styles.head}
-            src="/comet-pixel.webp"
+            src="/space/comet-pixel.webp"
             width={192}
             height={64}
           />

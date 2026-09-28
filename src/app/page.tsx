@@ -23,6 +23,7 @@ import { Sparkles } from "@/components/Sparkles/Sparkles";
 import { CrescentMoon } from "@/components/svg/CrescentMoon";
 import { Planet } from "@/components/svg/Planet";
 import { PixelPlanet } from "@/components/svg/PixelPlanet";
+import { planetMaps } from "@/lib/pixel-planets";
 import {
   ABOUT_LIPSUM,
   ABOUT_QUOTES,
@@ -35,6 +36,7 @@ import {
 export default function Home() {
   return (
     <Scene>
+      {Object.values(planetMaps).map((src) => <link key={src} rel="preload" as="image" href={src} />)}
       <SpaceBackground />
       <BigNebulas />
       <AuroraRibbons />

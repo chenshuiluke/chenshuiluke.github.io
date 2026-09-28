@@ -63,6 +63,13 @@ const alfaSlab = Alfa_Slab_One({
 export const metadata: Metadata = {
   title: "Luke Chen Shui",
   description: "Full Stack Software Engineer",
+  icons: {
+    icon: [
+      { url: "/avatar-head-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/avatar-head-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: { url: "/avatar-head-180.png", sizes: "180x180", type: "image/png" },
+  },
 };
 
 export default function RootLayout({

@@ -17,6 +17,22 @@ const projections = {
   moon: spherePixels(SIZE, true),
 };
 const textures = new Map<PlanetKind, Promise<Uint8ClampedArray>>();
+let renderer: Promise<Worker | null> | undefined;
+let nextPlanetId = 0;
+function planetRenderer() {
+  if (!renderer) renderer = new Promise<Worker | null>((resolve) => {
+    try {
+      const worker = new Worker(new URL("../../lib/planet.worker.ts", import.meta.url));
+      worker.onmessage = ({ data }) => {
+        if (data.type !== "ready") return;
+        if (data.supported) resolve(worker);
+        else { worker.terminate(); resolve(null); }
+      };
+      worker.onerror = () => { worker.terminate(); resolve(null); };
+    } catch { resolve(null); }
+  });
+  return renderer;
+}
 
 function loadTexture(kind: PlanetKind) {
   let loading = textures.get(kind);
@@ -49,10 +65,15 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
+    if (!canvas) return;
+    let context: CanvasRenderingContext2D | null = null;
+    const id = ++nextPlanetId;
+    let worker: Worker | null = null;
+    const rendererReady = typeof Worker !== "undefined" && typeof canvas.transferControlToOffscreen === "function"
+      ? planetRenderer() : Promise.resolve(null);
+    const body = canvas.closest<HTMLElement>("[data-planet]");
     const pixels = projections[kind === "moon" ? "moon" : "planet"];
-    const frame = context.createImageData(SIZE, SIZE);
+    let frame: ImageData;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     let texture: Uint8ClampedArray | undefined;
     let request = 0;
@@ -61,7 +82,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     let disposed = false;
     let loading = false;
     const draw = () => {
-      if (!texture) return;
+      if (!texture || !context || body?.style.visibility === "hidden") return;
       paintPlanet(
         frame.data,
         texture,
@@ -83,6 +104,10 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     const sync = () => {
       cancelAnimationFrame(request);
       previous = 0;
+      if (worker) {
+        worker.postMessage({ type: "active", id, active: !disposed && visible && !reduced.matches && !document.hidden });
+        return;
+      }
       if (
         !disposed &&
         texture &&
@@ -96,10 +121,20 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
       visible = entry.isIntersecting;
       if (visible && !loading) {
         loading = true;
-        loadTexture(kind).then((data) => {
+        Promise.all([loadTexture(kind), rendererReady]).then(([data, readyWorker]) => {
           if (disposed) return;
           texture = data;
-          draw();
+          if (readyWorker) {
+            const offscreen = canvas.transferControlToOffscreen();
+            worker = readyWorker;
+            worker.postMessage({ type: "init", id, canvas: offscreen, texture: data, kind, turn: turn.current,
+              active: visible && !reduced.matches && !document.hidden }, [offscreen]);
+          } else {
+            context = canvas.getContext("2d");
+            if (!context) throw new Error("Planet canvas unavailable");
+            frame = context.createImageData(SIZE, SIZE);
+            draw();
+          }
           canvas.dataset.ready = "true";
           sync();
         }).catch(() => {
@@ -113,6 +148,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
     document.addEventListener("visibilitychange", sync);
     return () => {
       disposed = true;
+      worker?.postMessage({ type: "dispose", id });
       cancelAnimationFrame(request);
       observer.disconnect();
       reduced.removeEventListener("change", sync);
@@ -127,7 +163,7 @@ export function PixelPlanet({ kind }: { kind: PlanetKind }) {
       aria-hidden="true"
     >
       <span className={styles.globe}>
-        <canvas ref={canvasRef} width={SIZE} height={SIZE} />
+        <canvas key={kind} ref={canvasRef} width={SIZE} height={SIZE} />
       </span>
       <span className={styles.planetGlimmer}>✦</span>
     </span>

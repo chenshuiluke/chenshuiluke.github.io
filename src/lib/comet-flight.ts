@@ -81,24 +81,36 @@ function birthEmber(flight: CometFlight, serial: number) {
     size: 8 + hash(seed + 6) * 10,
   };
 }
-const emberCaches = new WeakMap<CometFlight, Map<number, ReturnType<typeof birthEmber>>>();
+const emberCaches = new WeakMap<CometFlight, {
+  latest: number;
+  time: number;
+  embers: (ReturnType<typeof birthEmber> & { serial: number })[];
+}>();
 
 // Each ember is born at a past head position. Its velocity never follows later turns.
 export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
   const particles = [];
   const latest = Math.floor(seconds * 240);
   let cache = emberCaches.get(flight);
-  if (!cache) { cache = new Map(); emberCaches.set(flight, cache); }
-  for (const serial of cache.keys())
-    if (serial < latest - 312 || serial > latest) cache.delete(serial);
-  for (let serial = Math.max(0, latest - 312); serial <= latest; serial++) {
-    const birth = serial / 240;
-    if (birth > flight.duration) continue;
-    let ember = cache.get(serial);
-    if (!ember) { ember = birthEmber(flight, serial); cache.set(serial, ember); }
+  if (!cache || seconds < cache.time) {
+    cache = { latest: -1, time: seconds, embers: [] };
+    emberCaches.set(flight, cache);
+  }
+  // Birth each particle once, then retain only live particles. Long time jumps
+  // skip expired births; rewinding reconstructs the same deterministic embers.
+  for (let serial = Math.max(0, latest - 312, cache.latest + 1); serial <= latest; serial++) {
+    if (serial / 240 <= flight.duration)
+      cache.embers.push({ ...birthEmber(flight, serial), serial });
+  }
+  cache.latest = latest;
+  cache.time = seconds;
+  let alive = 0;
+  for (const ember of cache.embers) {
+    const { serial, birth } = ember;
     const { spark, life } = ember;
     const age = seconds - birth;
     if (age < 0 || age >= life) continue;
+    cache.embers[alive++] = ember;
     const heat = 1 - age / life;
     particles.push({
       serial,
@@ -112,6 +124,7 @@ export function cometEmbers(flight: CometFlight, seconds: number, scale = 1) {
       spark,
     });
   }
+  cache.embers.length = alive;
   return particles;
 }
 
@@ -131,15 +144,20 @@ export function drawCometFire(
   if (viewport && !flight.trail.some((p) => p.x > viewport.left - 200 && p.x < viewport.right + 200 && p.y > viewport.top - 200 && p.y < viewport.bottom + 200)) return;
   let palette = palettes.get(flight.hue);
   if (!palette) {
-    palette = Array.from({ length: 64 }, (_, i) => emberColor(flight.hue, i / 63));
+    palette = Array.from({ length: 256 }, (_, i) => {
+      const heat = (i % 128) / 127;
+      const alpha = i < 128 ? heat * .65 : heat ** 1.4;
+      return emberColor(flight.hue, Math.floor(heat * 63) / 63).replace(")", ` / ${alpha})`);
+    });
     palettes.set(flight.hue, palette);
   }
+  // Cached colors include opacity; one native rectangle draw per particle.
+  context.globalAlpha = 1;
   context.globalCompositeOperation = "lighter";
   for (const ember of cometEmbers(flight, seconds, scale)) {
     if (viewport && (ember.x < viewport.left - ember.size || ember.x > viewport.right + ember.size || ember.y < viewport.top - ember.size || ember.y > viewport.bottom + ember.size)) continue;
-    context.globalAlpha = ember.alpha;
-    context.fillStyle = palette[Math.min(63, Math.floor(ember.heat * 63))];
     const size = Math.max(1, Math.round(ember.size));
+    context.fillStyle = palette[(ember.spark ? 128 : 0) + Math.min(127, Math.floor(ember.heat * 127))];
     context.fillRect(
       Math.round(ember.x - size / 2),
       Math.round(ember.y - size / 2),

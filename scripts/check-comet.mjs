@@ -110,6 +110,10 @@ assert(
   "Embers fade rather than remain attached",
 );
 assert.notDeepEqual(frames[0], frames[2]);
+for (const time of [0, .1, .4, .405, .8, 1, 8, .4, .405, 1.3]) {
+  assert.deepEqual(cometEmbers(f, time), cometEmbers({ ...f }, time),
+    "Incremental particles match fresh sampling, including jumps and rewind");
+}
 assert(
   cometEmbers(f, 1).some((p) => p.spark),
   "Detached sparks accompany dense fire",
@@ -121,11 +125,18 @@ assert.deepEqual(
   "Old particles expire after the head exits",
 );
 let draws = 0;
+const colors = [];
 const ctx = {
+  imageSmoothingEnabled: true,
   globalAlpha: 1,
   globalCompositeOperation: "source-over",
   fillStyle: "",
-  fillRect() {
+  fillRect(x, y, w, h) {
+    assert(w >= 1 && h >= 1);
+    assert(Number.isInteger(x) && Number.isInteger(y));
+    const alpha = Number(this.fillStyle.match(/ \/ (.+)\)/)[1]);
+    assert(alpha >= 0 && alpha <= 1);
+    colors.push(this.fillStyle);
     draws++;
   },
 };
@@ -136,6 +147,10 @@ assert(
 );
 assert.equal(ctx.globalAlpha, 1);
 assert.equal(ctx.globalCompositeOperation, "source-over");
+assert.equal(ctx.imageSmoothingEnabled, true);
+const firstColors = colors.slice();
+drawCometFire(ctx, f, 1, 1);
+assert.deepEqual(colors.slice(firstColors.length), firstColors, "Cached colors are stable across frames");
 const visibleDraws = draws;
 drawCometFire(ctx, f, 1, 1, { left: 10000, right: 11000, top: 10000, bottom: 11000 });
 assert.equal(draws, visibleDraws, "Offscreen comets do not issue canvas draws");

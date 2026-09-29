@@ -1,16 +1,12 @@
 import { AnimatedCard } from "@/components/AnimatedCard/AnimatedCard";
-import { AuroraRibbons } from "@/components/AuroraRibbons/AuroraRibbons";
 import { Avatar } from "@/components/Avatar/Avatar";
-import { BigNebulas } from "@/components/BigNebulas/BigNebulas";
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
 import { ChapterSky } from "@/components/ChapterSky/ChapterSky";
 import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
 import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
-import { DotStars } from "@/components/DotStars/DotStars";
 import { FloatingColumn } from "@/components/FloatingColumn/FloatingColumn";
 import { FloatingObject } from "@/components/FloatingObject/FloatingObject";
 import { Footer } from "@/components/Footer/Footer";
-import { GlowStars } from "@/components/GlowStars/GlowStars";
 import { Hero } from "@/components/Hero/Hero";
 import { MoonPhase } from "@/components/MoonPhase/MoonPhase";
 import { Nav } from "@/components/Nav/Nav";
@@ -19,7 +15,6 @@ import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
 import { Scene } from "@/components/Scene/Scene";
 import { ScrollChapter } from "@/components/ScrollChapter/ScrollChapter";
 import { SpaceBackground } from "@/components/SpaceBackground/SpaceBackground";
-import { Sparkles } from "@/components/Sparkles/Sparkles";
 import { CrescentMoon } from "@/components/svg/CrescentMoon";
 import { Planet } from "@/components/svg/Planet";
 import { PixelPlanet } from "@/components/svg/PixelPlanet";
@@ -38,12 +33,7 @@ export default function Home() {
     <Scene>
       {Object.values(planetMaps).map((src) => <link key={src} rel="preload" as="image" href={src} />)}
       <SpaceBackground />
-      <BigNebulas />
-      <AuroraRibbons />
-      <GlowStars />
-      <ParallaxStars />
-      <DotStars />
-      <Sparkles />
+      <ParallaxStars rich />
       <SpaceSimulation />
       <Nav />
 

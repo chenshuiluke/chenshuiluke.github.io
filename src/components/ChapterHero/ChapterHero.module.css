@@ -8,15 +8,25 @@
 }
 
 /* Keep the opening sky rich even though the main starfield spans every chapter. */
-.hero::before,
-.hero::after {
+.backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.backdrop *,
+.backdrop::before,
+.backdrop::after {
+  animation-play-state: inherit !important;
+}
+.backdrop::before,
+.backdrop::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.hero::before {
+.backdrop::before {
   background:
     radial-gradient(ellipse 45% 60% at 12% 56%, #17413e38, transparent 90%),
     radial-gradient(ellipse 55% 65% at 92% 43%, #47254348, transparent 85%);
@@ -24,7 +34,7 @@
   transform-origin: center;
 }
 
-.hero::after {
+.backdrop::after {
   background-image:
     radial-gradient(1px 1px at 15% 23%, #f4eddbcc 95%, transparent),
     radial-gradient(1px 1px at 64% 58%, #cadcffaa 95%, transparent),
@@ -53,13 +63,13 @@
 .auroraCool,
 .auroraWarm {
   transform-origin: center;
+  /* Animate the cached SVG surface, not paths inside a masked SVG. */
+  will-change: transform, opacity;
 }
 .auroraCool {
-  opacity: 0.65;
   animation: auroraSway 19s ease-in-out infinite alternate;
 }
 .auroraWarm {
-  opacity: 0.5;
   animation: auroraSway 23s -11s ease-in-out infinite alternate-reverse;
 }
 .nebulaVeil {
@@ -86,11 +96,11 @@
 @keyframes auroraSway {
   from {
     transform: translate(-25px, 12px) rotate(-3deg) scaleY(0.9);
-    opacity: 0.6;
+    opacity: 0.048;
   }
   to {
     transform: translate(30px, -18px) rotate(3deg) scaleY(1.08);
-    opacity: 1;
+    opacity: 0.08;
   }
 }
 @keyframes dustDrift {
@@ -112,24 +122,6 @@
 .constellations path {
   stroke-opacity: 0.28;
   stroke-dasharray: 3 5;
-}
-.constellations rect {
-  filter: drop-shadow(0 0 4px #b8d6ff);
-  animation: constellationPulse 5s ease-in-out infinite alternate;
-}
-.constellations rect:nth-child(3n) {
-  animation-delay: -2s;
-}
-.constellations rect:nth-child(3n + 1) {
-  animation-delay: -4s;
-}
-@keyframes constellationPulse {
-  from {
-    opacity: 0.35;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .explore {

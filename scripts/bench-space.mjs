@@ -12,7 +12,9 @@ for (let i = 0; i < 240; i++) for (const flight of flights) {
   flight.age += PHYSICS_STEP;
   recordCometTrail(flight);
 }
-const context = { globalAlpha: 1, globalCompositeOperation: "source-over", fillStyle: "", fillRect() {} };
+const context = {
+  globalAlpha: 1, globalCompositeOperation: "source-over", fillRect() {},
+};
 function medianMsPerFrame(render) {
   const runs = [];
   for (let run = 0; run < 7; run++) {

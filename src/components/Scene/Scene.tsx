@@ -12,6 +12,7 @@ export function Scene({ children }: { children: ReactNode }) {
     const sync = () => {
       decorations.forEach((node) => {
         node.style.animationPlayState = visible.has(node) && !document.hidden ? "running" : "paused";
+        node.style.visibility = visible.has(node) ? "" : "hidden";
       });
     };
     const observer = new IntersectionObserver((entries) => {
@@ -26,7 +27,7 @@ export function Scene({ children }: { children: ReactNode }) {
     return () => {
       observer.disconnect();
       document.removeEventListener("visibilitychange", sync);
-      decorations.forEach((node) => { node.style.animationPlayState = ""; });
+      decorations.forEach((node) => { node.style.animationPlayState = ""; node.style.visibility = ""; });
     };
   }, []);
   return <div ref={ref} className={styles.scene} data-space-scene>{children}</div>;

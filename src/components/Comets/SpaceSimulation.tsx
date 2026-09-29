@@ -23,11 +23,14 @@ export function SpaceSimulation() {
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     let request = 0, previous = 0, accumulated = 0, worldHeight = 0, lastDiagnostic = 0;
     let anchorsDirty = true;
-    let planets: { node: HTMLElement; body: GravityBody; tx: number; ty: number; anchorX: number; anchorY: number }[] = [];
+    // Reading scrollY after transform writes forces a synchronous style flush.
+    // Capture it in the scroll handler, never between animation-frame writes.
+    let cameraY = scrollY;
+    let planets: { node: HTMLElement; body: GravityBody; tx: number; ty: number; anchorX: number; anchorY: number; radius: number; visible: boolean }[] = [];
     let flights: { path: CometFlight; delay: number; width: number }[] = [];
-    const spawn = () => createCometFlight(canvas.width, canvas.height, Math.random, scrollY, planets.map((p) => p.body));
+    const spawn = () => createCometFlight(canvas.width, canvas.height, Math.random, cameraY, planets.map((p) => p.body));
     const reset = () => {
-      planets.forEach(({ node }) => { node.style.translate = ""; });
+      planets.forEach(({ node }) => { node.style.translate = ""; node.style.visibility = ""; });
       scene.dataset.gravityActive = String(!reduced.matches);
       canvas.width = document.documentElement.clientWidth;
       canvas.height = innerHeight;
@@ -36,12 +39,12 @@ export function SpaceSimulation() {
       planets = [...scene.querySelectorAll<HTMLElement>("[data-planet]")].map((node) => {
         const rect = node.getBoundingClientRect();
         const radius = rect.width * 0.41;
-        const body = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 + scrollY, vx: 0, vy: 0, mass: radius ** 2 / 10 };
+        const body = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 + cameraY, vx: 0, vy: 0, mass: radius ** 2 / 10 };
         const group = node.closest("[data-gravity-system]") ?? scene;
         const members = groups.get(group) ?? [];
         members.push(body);
         groups.set(group, members);
-        return { node, body, tx: 0, ty: 0, anchorX: body.x, anchorY: body.y };
+        return { node, body, tx: 0, ty: 0, anchorX: body.x, anchorY: body.y, radius: Math.max(rect.width, rect.height) / 2 + 32, visible: true };
       });
       groups.forEach(seedOrbits);
       flights = nodes.current.slice(0, canvas.width <= 540 ? 4 : 6).map((node, i) => ({
@@ -84,18 +87,26 @@ export function SpaceSimulation() {
         planets.forEach((planet) => {
           const rect = planet.node.getBoundingClientRect();
           planet.anchorX = rect.x + rect.width / 2 - planet.tx;
-          planet.anchorY = rect.y + rect.height / 2 + scrollY - planet.ty;
+          planet.anchorY = rect.y + rect.height / 2 + cameraY - planet.ty;
         });
         anchorsDirty = false;
       }
       planets.forEach((planet) => {
+        const { x, y } = planet.body;
+        const r = planet.radius;
+        const visible = x > -r && x < canvas.width + r && y > cameraY - r && y < cameraY + canvas.height + r;
+        if (visible !== planet.visible) planet.node.style.visibility = visible ? "" : "hidden";
+        // Apply the exit position once so texture observers also leave the viewport.
+        const move = visible || planet.visible;
+        planet.visible = visible;
+        if (!move) return;
         planet.tx = planet.body.x - planet.anchorX;
         planet.ty = planet.body.y - planet.anchorY;
         planet.node.style.translate = `${planet.tx}px ${planet.ty}px`;
       });
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.save();
-      context.translate(0, -scrollY);
+      context.translate(0, -cameraY);
       let visibleFlights = 0;
       nodes.current.forEach((node, i) => {
         const flight = flights[i];
@@ -104,11 +115,14 @@ export function SpaceSimulation() {
           node.style.opacity = "0";
           return;
         }
-        drawCometFire(context, flight.path, flight.path.age, flight.width / 192, { top: scrollY, bottom: scrollY + canvas.height, left: 0, right: canvas.width });
+        drawCometFire(context, flight.path, flight.path.age, flight.width / 192, { top: cameraY, bottom: cameraY + canvas.height, left: 0, right: canvas.width });
         const { x, y, vx, vy } = flight.path.body;
+        const headVisible = flight.path.age < flight.path.duration && x > -flight.width && x < canvas.width + flight.width && y > cameraY - flight.width && y < cameraY + canvas.height + flight.width;
+        const opacity = headVisible ? "0.95" : "0";
+        if (node.style.opacity !== opacity) node.style.opacity = opacity;
+        if (!headVisible) return;
         const angle = Math.atan2(vy, vx) * 180 / Math.PI;
-        node.style.transform = `translate3d(${x}px, ${y - scrollY}px, 0) rotate(${angle}deg) translate(-86%, -56%)`;
-        node.style.opacity = flight.path.age < flight.path.duration ? "0.95" : "0";
+        node.style.transform = `translate3d(${x}px, ${y - cameraY}px, 0) rotate(${angle}deg) translate(-86%, -56%)`;
         if (node.dataset.hue !== String(flight.path.hue)) {
           node.style.filter = `sepia(1) saturate(4) hue-rotate(${flight.path.hue - 25}deg)`;
           node.dataset.hue = String(flight.path.hue);
@@ -135,7 +149,7 @@ export function SpaceSimulation() {
       canvas.height = innerHeight;
       anchorsDirty = true;
     };
-    const moved = () => { anchorsDirty = true; };
+    const moved = () => { cameraY = scrollY; anchorsDirty = true; };
     const layoutObserver = new ResizeObserver(() => { anchorsDirty = true; worldHeight = scene.offsetHeight; });
     layoutObserver.observe(scene);
     const motionChanged = () => { reset(); sync(); };
@@ -151,7 +165,7 @@ export function SpaceSimulation() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", moved);
       layoutObserver.disconnect();
-      planets.forEach(({ node }) => { node.style.translate = ""; });
+      planets.forEach(({ node }) => { node.style.translate = ""; node.style.visibility = ""; });
       delete scene.dataset.gravityActive;
     };
   }, []);

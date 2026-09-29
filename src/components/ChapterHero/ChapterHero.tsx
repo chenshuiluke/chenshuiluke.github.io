@@ -4,8 +4,9 @@ import styles from "./ChapterHero.module.css";
 export function ChapterHero({ children }: { children: ReactNode }) {
   return (
     <div className={styles.hero} data-gravity-system>
+      <div className={styles.backdrop} data-space-decoration data-hero-sky aria-hidden="true">
       <svg
-        className={styles.aurora}
+        className={`${styles.aurora} ${styles.auroraCool}`}
         viewBox="0 0 1440 900"
         preserveAspectRatio="none"
         fill="none"
@@ -25,7 +26,7 @@ export function ChapterHero({ children }: { children: ReactNode }) {
             <stop offset="1" stopColor="#e78dbd" stopOpacity="0" />
           </linearGradient>
         </defs>
-        <g className={styles.auroraCool}>
+        <g>
           <path
             d="M-96 420H-72V432H-48V432H-24V444H0V444H12V444H36V444H60V432H72V432H96V420H108V408H132V396H144V396H156V372H180V360H192V348H204V336H228V324H240V312H252V288H276V276H288V264H312V252H324V240H348V228H372V216H384V204H408V192H432V192H456V180H480V180H504V180H540V180H540V180H564V180H588V192H612V192H648V204H672V204H696V216H720V216H744V228H768V228H804V240H828V240H852V252H876V252H900V264H924V264H960V264H984V264H1008V276H1044V276H1068V276H1104V276H1140V264H1176V264H1212V252H1248V252H1284V240H1320V228H1356V216H1404V204H1452V180H1488V168H1536V144"
             stroke="url(#hero-aurora-cool)"
@@ -37,7 +38,15 @@ export function ChapterHero({ children }: { children: ReactNode }) {
             strokeWidth="9"
           />
         </g>
-        <g className={styles.auroraWarm}>
+      </svg>
+      <svg
+        className={`${styles.aurora} ${styles.auroraWarm}`}
+        viewBox="0 0 1440 900"
+        preserveAspectRatio="none"
+        fill="none"
+        aria-hidden="true"
+      >
+        <g>
           <path
             d="M-120 888H-84V864H-48V840H-24V828H12V816H36V804H72V792H108V780H132V780H168V768H192V768H216V768H252V768H276V768H312V768H336V780H372V780H396V780H420V780H456V780H480V792H516V792H540V792H576V792H600V792H636V780H660V780H696V780H732V768H756V756H792V744H828V732H864V708H864V708H888V684H924V672H960V648H984V636H1008V624H1032V612H1056V600H1080V588H1092V576H1116V564H1140V564H1152V552H1176V552H1188V540H1200V540H1224V540H1236V540H1248V540H1260V540H1284V540H1296V540H1320V540H1332V552H1356V552H1368V564H1392V564H1416V576H1440V576H1464V588H1488V600H1512V612H1536V624"
             stroke="url(#hero-aurora-warm)"
@@ -62,32 +71,8 @@ export function ChapterHero({ children }: { children: ReactNode }) {
           <path d="M1090 190 1160 150 1234 204 1200 286 1310 316" />
           <path d="M330 735 393 698 452 754" />
         </g>
-        <g fill="#dbe9ff">
-          {[
-            [85, 460],
-            [150, 410],
-            [222, 444],
-            [196, 524],
-            [285, 560],
-            [1090, 190],
-            [1160, 150],
-            [1234, 204],
-            [1200, 286],
-            [1310, 316],
-            [330, 735],
-            [393, 698],
-            [452, 754],
-          ].map(([cx, cy]) => (
-            <rect
-              key={`${cx}-${cy}`}
-              x={cx - 2}
-              y={cy - 2}
-              width="4"
-              height="4"
-            />
-          ))}
-        </g>
       </svg>
+      </div>
       {children}
       <a className={styles.explore} href="#work" aria-label="Scroll to my work">
         <span aria-hidden="true">↓</span>

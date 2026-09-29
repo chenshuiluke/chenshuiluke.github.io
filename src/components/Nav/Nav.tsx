@@ -14,9 +14,6 @@ export function Nav() {
         <span className={styles.srOnly}>{name}</span>
       </Link>
       <div className={styles.links}>
-        <Link href="/#work">Work</Link>
-        <Link href="/#about">About</Link>
-        <Link href="/#contact">Contact</Link>
         <Link href="/blog">Blog</Link>
       </div>
     </nav>

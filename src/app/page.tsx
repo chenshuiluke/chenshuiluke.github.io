@@ -1,32 +1,18 @@
-import { AnimatedCard } from "@/components/AnimatedCard/AnimatedCard";
-import { Avatar } from "@/components/Avatar/Avatar";
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
-import { ChapterSky } from "@/components/ChapterSky/ChapterSky";
 import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
 import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
-import { FloatingColumn } from "@/components/FloatingColumn/FloatingColumn";
 import { FloatingObject } from "@/components/FloatingObject/FloatingObject";
-import { Footer } from "@/components/Footer/Footer";
 import { Hero } from "@/components/Hero/Hero";
 import { MoonPhase } from "@/components/MoonPhase/MoonPhase";
 import { Nav } from "@/components/Nav/Nav";
 import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";
 import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
 import { Scene } from "@/components/Scene/Scene";
-import { ScrollChapter } from "@/components/ScrollChapter/ScrollChapter";
 import { SpaceBackground } from "@/components/SpaceBackground/SpaceBackground";
 import { CrescentMoon } from "@/components/svg/CrescentMoon";
 import { Planet } from "@/components/svg/Planet";
 import { PixelPlanet } from "@/components/svg/PixelPlanet";
 import { planetMaps } from "@/lib/pixel-planets";
-import {
-  ABOUT_LIPSUM,
-  ABOUT_QUOTES,
-  CONTACT_LIPSUM,
-  CONTACT_QUOTES,
-  WORK_LIPSUM,
-  WORK_QUOTES,
-} from "@/lib/lipsum";
 
 export default function Home() {
   return (
@@ -40,8 +26,6 @@ export default function Home() {
       <ChapterHero>
         <MoonPhase />
         <DistantPlanet />
-        <Avatar />
-        <Hero />
         <FloatingObject
           style={{ top: "18%", left: "2%" }}
           dur="19s"
@@ -84,59 +68,11 @@ export default function Home() {
         >
           <Planet />
         </FloatingObject>
-        <RecentPosts />
+        <main>
+          <Hero />
+          <RecentPosts />
+        </main>
       </ChapterHero>
-
-      <ScrollChapter
-        id="work"
-        scenery={<ChapterSky chapter="work" />}
-        eyebrow="01 — Work"
-        title="Things I've shipped."
-        body={<p>{WORK_LIPSUM}</p>}
-        cards={
-          <>
-            {WORK_QUOTES.map((q, i) => (
-              <AnimatedCard key={q.name} {...q} delay={i} />
-            ))}
-          </>
-        }
-      />
-
-      <ScrollChapter
-        id="about"
-        scenery={<ChapterSky chapter="about" />}
-        eyebrow="02 — About"
-        title="Who's behind the keys."
-        body={
-          <FloatingColumn>
-            <p>{ABOUT_LIPSUM}</p>
-          </FloatingColumn>
-        }
-        cards={
-          <>
-            {ABOUT_QUOTES.map((q, i) => (
-              <AnimatedCard key={q.name} {...q} delay={i} />
-            ))}
-          </>
-        }
-      />
-
-      <ScrollChapter
-        id="contact"
-        scenery={<ChapterSky chapter="contact" />}
-        eyebrow="03 — Contact"
-        title="Beam me a message."
-        body={<p>{CONTACT_LIPSUM}</p>}
-        cards={
-          <>
-            {CONTACT_QUOTES.map((q, i) => (
-              <AnimatedCard key={q.name} {...q} delay={i} />
-            ))}
-          </>
-        }
-      />
-
-      <Footer />
     </Scene>
   );
 }

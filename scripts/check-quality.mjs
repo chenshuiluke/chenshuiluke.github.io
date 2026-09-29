@@ -26,6 +26,62 @@ function load(path, mocks = {}, globals = {}) {
 
 const published = { title: "Published", slug: "published", permalink: "/blog/published", summary: "Public post", date: "2026-01-01", tags: ["machine learning", "café", "100%"], draft: false };
 const draft = { ...published, title: "Secret draft", slug: "secret", permalink: "/blog/secret", draft: true, tags: ["draft-only"] };
+
+// Homepage previews use real published posts; rotating them must not add a frame loop.
+{
+  const previewPosts = [published, { ...published, title: "Newer", date: "2026-02-01", permalink: "/blog/newer" }, draft];
+  const { RecentPosts } = load("src/components/RecentPosts/RecentPosts.tsx", {
+    "@/content": { posts: previewPosts }, "./PostHighlights": { PostHighlights: () => null },
+  });
+  assert.equal(JSON.stringify(RecentPosts().props.posts.map((p) => p.title)), JSON.stringify(["Newer", "Published"]));
+  assert.equal(load("src/components/RecentPosts/RecentPosts.tsx", {
+    "@/content": { posts: [] }, "./PostHighlights": { PostHighlights: () => null },
+  }).RecentPosts(), null);
+  const slots = [];
+  let cursor, runEffect, cleanup, tick;
+  const handlers = new Map();
+  const motion = { matches: false, addEventListener: (_, fn) => handlers.set("motion", fn), removeEventListener: () => handlers.delete("motion") };
+  const page = { hidden: false, addEventListener: (_, fn) => handlers.set("visibility", fn), removeEventListener: () => handlers.delete("visibility") };
+  const { PostHighlights } = load("src/components/RecentPosts/PostHighlights.tsx", {
+    react: {
+      useState: (initial) => {
+        const slot = cursor++;
+        if (slots[slot] === undefined) slots[slot] = initial;
+        return [slots[slot], (value) => { slots[slot] = typeof value === "function" ? value(slots[slot]) : value; }];
+      },
+      useEffect: (fn) => { runEffect = fn; },
+    },
+  }, {
+    window: { matchMedia: () => motion }, document: page,
+    setInterval: (fn, ms) => { assert.equal(ms, 8000); tick = fn; return 1; },
+    clearInterval: () => { tick = undefined; },
+  });
+  const render = (posts = previewPosts.slice(0, 2)) => {
+    cleanup?.(); cursor = 0;
+    const tree = PostHighlights({ posts }); cleanup = runEffect(); return tree;
+  };
+  let tree = render();
+  tick(); assert.equal(slots[0], 1);
+  tick(); assert.equal(slots[0], 0, "Autoplay wraps");
+  tree.props.onMouseEnter(); render(); assert.equal(tick, undefined, "Hover pauses previews");
+  tree.props.onMouseLeave(); tree = render(); assert.equal(typeof tick, "function");
+  tree.props.onFocusCapture(); render(); assert.equal(tick, undefined, "Focus prevents replacing a focused link");
+  tree.props.onBlurCapture({ currentTarget: { contains: () => false } }); tree = render();
+  const controls = tree.props.children[2].props.children;
+  controls[2].props.onClick(); assert.equal(slots[0], 1, "Previous wraps backwards");
+  controls[3].props.onClick(); assert.equal(slots[0], 0, "Next wraps forwards");
+  controls[0].props.onClick(); tree = render(); assert.equal(tick, undefined, "Explicit pause works");
+  tree.props.children[2].props.children[0].props.onClick(); render();
+  motion.matches = true; handlers.get("motion")(); assert.equal(tick, undefined);
+  motion.matches = false; handlers.get("motion")(); assert.equal(typeof tick, "function");
+  page.hidden = true; handlers.get("visibility")(); assert.equal(tick, undefined);
+  page.hidden = false; handlers.get("visibility")(); assert.equal(typeof tick, "function");
+  render([published]); assert.equal(tick, undefined, "Single post needs no timer");
+  assert.equal(render([]), null); assert.equal(handlers.size, 0, "Listeners are cleaned up");
+  assert(!read("src/app/page.tsx").includes("LIPSUM"));
+  assert.match(read("src/components/Hero/Hero.tsx"), /href="mailto:chenshuiluke@gmail.com"/);
+  console.log("Homepage content, preview navigation, pause, reduced-motion and hidden-tab checks passed");
+}
 const oldEnv = process.env.NODE_ENV;
 try {
   process.env.NODE_ENV = "production";

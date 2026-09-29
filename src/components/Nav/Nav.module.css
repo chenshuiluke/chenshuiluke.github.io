@@ -124,20 +124,16 @@
 @media (max-width: 480px) {
   .nav {
     padding: 12px 12px;
-    flex-wrap: wrap;
-    row-gap: 4px;
   }
   .stack {
     font-size: 18px;
   }
   .logo {
     padding: 4px 6px;
-    flex: 1 0 100%;
     text-align: center;
     justify-content: center;
   }
   .links {
-    flex: 1 0 100%;
     justify-content: center;
     gap: 4px;
     font-size: 12px;

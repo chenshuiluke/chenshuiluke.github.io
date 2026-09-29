@@ -74,9 +74,6 @@ export function ChapterHero({ children }: { children: ReactNode }) {
       </svg>
       </div>
       {children}
-      <a className={styles.explore} href="#work" aria-label="Scroll to my work">
-        <span aria-hidden="true">↓</span>
-      </a>
     </div>
   );
 }

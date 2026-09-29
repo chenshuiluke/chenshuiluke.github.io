@@ -1,18 +1,9 @@
 .wrap {
-  position: absolute;
-  top: max(95px, 12vh);
-  left: 50%;
-  transform: translateX(-50%);
-  width: clamp(150px, 19vh, 220px);
+  position: relative;
+  margin: 0 auto 24px;
+  width: clamp(150px, 19vh, 190px);
   z-index: 20;
   animation: avatarFloat 8s ease-in-out infinite alternate;
-}
-
-@media (max-width: 540px) {
-  .wrap {
-    top: 145px;
-    width: 155px;
-  }
 }
 
 .wrap img {
@@ -24,9 +15,9 @@
 
 @keyframes avatarFloat {
   from {
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
   to {
-    transform: translateX(-50%) translateY(-10px);
+    transform: translateY(-10px);
   }
 }

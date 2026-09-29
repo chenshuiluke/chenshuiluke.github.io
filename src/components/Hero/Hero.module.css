@@ -1,11 +1,9 @@
 .hero {
-  position: absolute;
-  top: max(300px, 43vh);
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  padding-top: max(110px, 13vh);
+  margin: 0 auto;
   text-align: center;
   z-index: 18;
-  white-space: nowrap;
   max-width: 92vw;
 }
 
@@ -102,15 +100,6 @@
   box-shadow: 5px 7px 0 var(--ol);
 }
 
-.ghost {
-  background: #1e294d;
-  color: var(--cream);
-  border-color: #8296c3;
-  box-shadow:
-    4px 4px 0 #0a122a,
-    inset 0 3px #41567b;
-}
-
 .primary::after {
   content: "";
   position: absolute;
@@ -138,15 +127,7 @@
   }
 }
 
-@media (max-width: 540px) {
-  .hero {
-    top: 355px;
-    width: 92vw;
-  }
-}
-
-.ghost:hover {
-  transform: translateY(-3px);
-  box-shadow: 5px 7px 0 #182840;
-  border-color: #4a6a8a;
+.btn:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 6px;
 }

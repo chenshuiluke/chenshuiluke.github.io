@@ -432,6 +432,7 @@ document.documentElement.clientWidth = 1440;
 listeners.get("resize")();
 const fleet = simulatedUfos.slice(-2);
 for (let now = 27500; now <= 39400; now += 100) {
+  listeners.get("pointermove")({ pointerType: "mouse", clientX: 100, clientY: 200 });
   for (const ufo of fleet) {
     Object.assign(ufo, { age: 0, delay: 0, weaponCooldown: 0 });
     Object.assign(ufo.body, { x: 300, y: globals.scrollY + 200, vx: 0, vy: 0 });
@@ -443,6 +444,36 @@ const fleetLaunches = missileLaunches.slice(launchesBefore - 1);
 assert(fleetLaunches.length >= 3, "The shared cooldown expires and allows later shots");
 for (let i = 1; i < fleetLaunches.length; i++)
   assert(fleetLaunches[i] - fleetLaunches[i - 1] >= 4000, "All pilots share a four-second launch gap, including across resets");
+
+// Idle wandering uses the same position for rendering and gravity, without a new loop.
+fleet.forEach((ufo) => { ufo.delay = 100; });
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 600, clientY: 400 });
+const cursorPosition = () => {
+  const [, x, y] = holeCanvas.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px/);
+  return [Number(x) + blackHole.HOLE_WIDTH, Number(y) + blackHole.HOLE_HEIGHT];
+};
+for (let now = 39500; now <= 43300; now += 100) advance(now);
+assert.deepEqual(cursorPosition(), [600, 400], "Cursor stays put during the four-second idle delay");
+const readsBeforeDrift = textReads;
+let previousCursor = cursorPosition();
+for (let now = 43400; now <= 51400; now += 100) {
+  advance(now);
+  const point = cursorPosition();
+  assert(Math.hypot(point[0] - previousCursor[0], point[1] - previousCursor[1]) <= 6.51, "Idle wandering stays smooth and speed-limited");
+  assert(point[0] >= 0 && point[0] <= 1440 && point[1] >= 0 && point[1] <= 844, "Drift stays inside the viewport");
+  previousCursor = point;
+}
+assert.notDeepEqual(cursorPosition(), [600, 400], "An idle black hole wanders away from the mouse");
+assert.equal(textReads, readsBeforeDrift, "Wandering doesn't add per-frame layout reads");
+assert.equal(frames.size, 1, "Wandering reuses the existing animation loop");
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 610, clientY: 410 });
+advance(51500);
+assert.deepEqual(cursorPosition(), [610, 410], "Mouse movement immediately reclaims the black hole");
+for (let now = 51600; now <= 54500; now += 100) advance(now);
+assert.deepEqual(cursorPosition(), [610, 410], "Moving the cursor restarts the idle delay");
+listeners.get("pointerout")({ relatedTarget: null });
+for (let now = 54600; now <= 57500; now += 100) advance(now);
+assert.equal(holeCanvas.style.opacity, "0", "Leaving the page disables idle wandering");
 document.hidden = true;
 listeners.get("visibilitychange")();
 assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");

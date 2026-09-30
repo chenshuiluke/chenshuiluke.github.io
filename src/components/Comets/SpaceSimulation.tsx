@@ -46,6 +46,7 @@ export function SpaceSimulation() {
       return frame;
     });
     let mouseInside = false, pointerX = 0, pointerY = 0;
+    let lastPointerMove = 0, nextDriftTarget = 0, driftX = 0, driftY = 0;
     let elapsed = 0, nextHole = 2, holeBorn = 0, holeUntil = 0, lastHoleFrame = -1;
     let captures = 0, lastDebris = 0;
     const debris: (GravityBody & { life: number; color: string; size: number })[] = [];
@@ -144,6 +145,19 @@ export function SpaceSimulation() {
         holeBorn = elapsed;
         holeUntil = elapsed + 7;
         nextHole = holeUntil + 5 + Math.random() * 3;
+      }
+      const idle = elapsed - lastPointerMove - 4;
+      if (!coarse.matches && mouseInside && idle > 0) {
+        if (elapsed >= nextDriftTarget) {
+          driftX = canvas.width * (.15 + Math.random() * .7);
+          driftY = canvas.height * (.15 + Math.random() * .7);
+          nextDriftTarget = elapsed + 5;
+        }
+        const dx = driftX - pointerX, dy = driftY - pointerY;
+        // Ease into a slow wander on the existing clock; pointer movement takes over.
+        const step = Math.min(1 - Math.exp(-dt * .7), 65 * dt / (Math.hypot(dx, dy) || 1)) * Math.min(1, idle);
+        pointerX += dx * step;
+        pointerY += dy * step;
       }
       hole.x = pointerX;
       hole.y = pointerY + cameraY;
@@ -395,6 +409,8 @@ export function SpaceSimulation() {
     const pointerMoved = (event: PointerEvent) => {
       if (event.pointerType !== "mouse" || reduced.matches) return;
       pointerX = event.clientX; pointerY = event.clientY; mouseInside = true;
+      lastPointerMove = elapsed;
+      nextDriftTarget = 0;
     };
     const pointerLeft = () => { mouseInside = false; holeCanvas.style.opacity = "0"; delete scene.dataset.blackHoleActive; };
     const pointerOut = (event: PointerEvent) => { if (!event.relatedTarget) pointerLeft(); };

@@ -7,6 +7,7 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { renderToStaticMarkup } from "react-dom/server";
 import config from "../velite.config.ts";
+import * as blackHole from "../src/lib/black-hole.ts";
 
 const require = createRequire(import.meta.url);
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -279,31 +280,42 @@ assert(!/\bscrollY\b/.test(animationLoop), "Never read scrollY between planet/co
 // Run the real simulation effect: culling must skip DOM writes, not gravity.
 let transformWrites = 0, gravitySteps = 0, lastTransform = "";
 const planetStyle = { visibility: "" };
+const planetTexture = { width: 96, height: 96, dataset: { ready: "loading" } };
+let stripDraws = 0, snapshots = 0;
+document.createElement = () => ({ getContext: () => ({ translate() {}, rotate() {}, drawImage() { snapshots++; } }) });
 Object.defineProperty(planetStyle, "translate", {
   get: () => lastTransform,
   set: (value) => { transformWrites++; lastTransform = value; },
 });
 const planet = {
   style: planetStyle,
+  dataset: { planet: "jade" },
+  querySelector: () => planetTexture,
   getBoundingClientRect: () => ({ x: 100, y: 100, width: 100, height: 100 }),
   closest: () => null,
 };
 const scene = { dataset: {}, offsetHeight: 4000, querySelectorAll: () => [planet] };
 const fireCanvas = {
   width: 390, height: 844, dataset: {}, closest: () => scene,
-  getContext: () => ({ clearRect() {}, save() {}, restore() {}, translate() {} }),
+  getContext: () => ({ clearRect() {}, save() {}, restore() {}, translate() {}, rotate() {}, fillRect() {},
+    drawImage: (_image, ...geometry) => { assert(geometry.every(Number.isFinite)); stripDraws++; } }),
 };
+const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {} }) };
+let simulationRefs = 0;
+const pointerMedia = { matches: false };
 let body;
 const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
-  react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? fireCanvas : initial }) },
+  react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : initial }) },
+  "@/lib/black-hole": blackHole,
   "@/components/svg/PixelSprite": { PixelSprite: () => null },
   "@/lib/gravity": {
     PHYSICS_STEP: 1 / 60,
     seedOrbits: (bodies) => { body = bodies[0]; },
-    stepGravity: (bodies) => { assert(bodies.includes(body)); gravitySteps++; },
+    stepGravity: (bodies) => { if (bodies.includes(body)) gravitySteps++; },
   },
 }, {
   ...globals,
+  matchMedia: (query) => query.includes("pointer: coarse") ? pointerMedia : motion,
   ResizeObserver: class { observe() {} disconnect() {} },
 });
 SpaceSimulation();
@@ -325,11 +337,55 @@ body.x = 150;
 advance(1060);
 assert.equal(planetStyle.visibility, "", "Gravity bodies reappear on entry");
 assert(transformWrites > writesAfterExit);
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 320, clientY: 400 });
+advance(1080);
+assert.equal(scene.dataset.blackHoleActive, "true", "Mouse replaces the cursor with a black hole");
+assert.equal(holeCanvas.style.opacity, "1");
+listeners.get("pointerout")({ relatedTarget: null });
+advance(1100);
+assert.equal(holeCanvas.style.opacity, "0", "Leaving the page restores the cursor");
+listeners.get("pointermove")({ pointerType: "touch", clientX: 320, clientY: 400 });
+advance(1120);
+assert.equal(holeCanvas.style.opacity, "0", "Touch doesn't create a mouse cursor");
+planetTexture.dataset.ready = "true";
+listeners.get("pointermove")({ pointerType: "mouse", clientX: body.x + 150, clientY: body.y - globals.scrollY });
+advance(1140);
+assert.equal(snapshots, 1, "Disruption snapshots the real rotating planet texture once");
+assert(stripDraws > 0, "The simulation renders the independent textured strips");
+assert.equal(planetStyle.visibility, "hidden", "Strands replace the original planet rather than duplicating it");
+listeners.get("pointermove")({ pointerType: "mouse", clientX: body.x, clientY: body.y - globals.scrollY });
+advance(1200);
+assert.equal(planetStyle.visibility, "hidden", "Captured bodies are hidden");
+const stepsAtCapture = gravitySteps;
+advance(1300);
+assert.equal(gravitySteps, stepsAtCapture, "Swallowed planets no longer pull on other bodies");
+assert(Number(fireCanvas.dataset.blackHoleRadius) > blackHole.START_RADIUS, "Actual captures grow the black hole");
+listeners.get("pointerout")({ relatedTarget: null });
+for (let now = 1400; now <= 12500; now += 100) advance(now);
+assert(gravitySteps > stepsAtCapture, "Captured planets are replenished after their cooldown");
+pointerMedia.matches = true;
+advance(12600); advance(12900); advance(13200); advance(13500); advance(13800);
+assert(Number(holeCanvas.style.opacity) > 0, "Coarse-pointer devices spawn a black hole automatically");
+assert.equal(scene.dataset.blackHoleActive, "false", "Mobile never hides a native cursor");
+for (let now = 13900; now <= 22000; now += 100) advance(now);
+assert.equal(holeCanvas.style.opacity, "0", "Mobile bursts end instead of permanently covering content");
+document.hidden = true;
+listeners.get("visibilitychange")();
+assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");
+assert.equal(holeCanvas.style.opacity, "0");
+document.hidden = false;
+listeners.get("visibilitychange")();
+motion.matches = true;
+listeners.get("change")();
+assert.equal(frames.size, 0, "Reduced motion disables black holes");
+assert.equal(planetStyle.transform, "", "Reduced motion restores unstretched planets");
+motion.matches = false;
 cleanupSimulation();
 assert.equal(lastTransform, "");
 assert.equal(planetStyle.visibility, "");
 assert.equal(frames.size, 0);
 assert.equal(listeners.size, 0);
+assert.equal(scene.dataset.blackHoleActive, undefined);
 console.log("Off-screen gravity, transform culling, re-entry and cleanup checks passed");
 
 const workerFrames = new Map(), workerMessages = [], paintedTurns = [];

@@ -13,3 +13,10 @@
 .scene [data-planet] {
   pointer-events: none;
 }
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .scene[data-black-hole-active="true"],
+  .scene[data-black-hole-active="true"] * {
+    cursor: none;
+  }
+}

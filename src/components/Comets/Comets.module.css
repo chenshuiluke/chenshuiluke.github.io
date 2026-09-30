@@ -42,13 +42,24 @@
     79% 65%, 79% 59%, 77.5% 59%
   );
 }
+.blackHole {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 192px;
+  height: 144px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+}
 @media (max-width: 540px) {
   .comet:nth-of-type(n + 5) {
     display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .layer {
+  .layer, .blackHole {
     display: none;
   }
 }

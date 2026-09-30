@@ -6,7 +6,61 @@ export type CometFlight = {
   age: number;
   duration: number;
   hue: number;
+  variant: number;
 };
+
+export const COMET_VARIANTS = 5;
+export const COMET_HEAD_SIZE = 40;
+
+// Small, tail-free nuclei: shared warm highlights keep hue shifts and fire cohesive.
+// Generate once per variant, never per animation frame.
+export function paintCometHead(pixels: Uint8ClampedArray, variant: number) {
+  pixels.fill(0);
+  const palette = [
+    [29, 22, 40], [55, 35, 48], [85, 47, 48], [121, 65, 49],
+    [161, 85, 48], [201, 114, 55], [235, 148, 67], [255, 185, 87],
+    [255, 216, 125], [255, 238, 181], [255, 251, 225],
+  ];
+  const noise = (x: number, y: number) => {
+    const n = Math.sin(x * 127.1 + y * 311.7 + variant * 73.3) * 43758.5453;
+    return n - Math.floor(n);
+  };
+  const craters = [[-.3, -.25, .29], [.28, .24, .23], [-.3, .4, .16], [.35, -.4, .13]];
+  for (let y = 0; y < COMET_HEAD_SIZE; y++) for (let x = 0; x < COMET_HEAD_SIZE; x++) {
+    const u = (x - 19.5) / 20, v = (y - 19.5) / 20;
+    const angle = Math.atan2(v, u);
+    const rough = .025 * Math.sin(angle * 11 + variant) + .035 * Math.sin(angle * 5);
+    let edge: number;
+    switch (variant) {
+      case 1: edge = 1 - Math.abs(u + v * .3) / .96 - Math.abs(v) / .61 + rough; break;
+      case 2: edge = Math.max(.61 - Math.hypot(u + .31, v - .14), .57 - Math.hypot(u - .34, v + .18)) + rough; break;
+      case 3: edge = Math.max(1 - Math.abs(u + .25) / .53 - Math.abs(v - .18) / .64,
+        1 - Math.abs(u - .08) / .4 - Math.abs(v + .18) / .77,
+        1 - Math.abs(u - .42) / .42 - Math.abs(v - .19) / .57) * .5; break;
+      case 4: edge = .79 - Math.hypot(u * .92, v * 1.08) + .065 * Math.sin(angle * 7) + rough; break;
+      default: edge = .84 - Math.hypot(u, v) + rough;
+    }
+    if (edge <= 0) continue;
+    const grain = noise(x, y), clusters = noise(Math.floor(x / 3), Math.floor(y / 3));
+    let tone = 4.8 + u * 2 - v * 2 + (clusters - .5) * 2 + (grain - .5) * 1.3;
+    if (variant === 1 || variant === 3) {
+      // Broad angular facets with fine mineral flecks, rather than round craters.
+      tone += (Math.sin(u * 13 + v * 5) > 0 ? 1.6 : -1.7);
+      if (Math.abs((u + v * .45 + 1) % .28) < .035) tone += 2;
+    } else {
+      for (const [cx, cy, radius] of craters) {
+        const dx = u - cx, dy = v - cy, d = Math.hypot(dx, dy) / radius;
+        if (d < 1) tone -= 2.5 + dy / radius;
+        else if (d < 1.22) tone += dy < 0 ? 2.4 : -.7;
+      }
+      if (variant === 4 && Math.abs(Math.sin(u * 12 + Math.sin(v * 9)) * Math.cos(v * 10 - u * 4)) < .14) tone = 8 + grain * 2;
+    }
+    if (edge < .075) tone = u > -.2 ? 8 + grain * 2 : 4 + grain * 3;
+    if (grain > .975) tone += 2;
+    const color = palette[Math.max(0, Math.min(palette.length - 1, Math.round(tone)))];
+    pixels.set([...color, 255], (y * COMET_HEAD_SIZE + x) * 4);
+  }
+}
 
 export function createCometFlight(
   width: number,
@@ -33,6 +87,7 @@ export function createCometFlight(
     age: 0,
     duration: Infinity,
     hue: [0, 20, 35, 180, 265, 320][Math.floor(random() * 6)],
+    variant: Math.floor(random() * COMET_VARIANTS),
   };
 }
 

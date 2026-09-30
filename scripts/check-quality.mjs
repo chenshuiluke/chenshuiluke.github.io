@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import config from "../velite.config.ts";
 import * as blackHole from "../src/lib/black-hole.ts";
 import * as ufoHelpers from "../src/lib/ufos.ts";
+import * as cometHelpers from "../src/lib/comet-flight.ts";
 import { avatarReaction } from "../src/lib/avatar-reaction.ts";
 
 const require = createRequire(import.meta.url);
@@ -291,6 +292,14 @@ for (const name of ["ChapterSky", "FloatingObject"])
   assert(!/^\s*filter:/m.test(read(`src/components/${name}/${name}.module.css`)), "Orbital anchors must not own filter surfaces");
 console.log("Viewport star rendering, decoration culling, visibility cleanup and bounded filter checks passed");
 const simulation = read("src/components/Comets/SpaceSimulation.tsx");
+const holeStyles = read("src/components/Comets/Comets.module.css");
+const backgroundHoleLayer = Number(holeStyles.match(/\.blackHole\s*\{[^}]*z-index:\s*(\d+)/)[1]);
+const cursorHoleLayer = Number(holeStyles.match(/:global\(\[data-black-hole-active="true"\]\) \.blackHole\s*\{\s*z-index:\s*(\d+)/)[1]);
+for (const component of ["Hero", "RecentPosts", "Nav"]) {
+  const contentLayer = Number(read(`src/components/${component}/${component}.module.css`).match(/z-index:\s*(\d+)/)[1]);
+  assert(backgroundHoleLayer < contentLayer && cursorHoleLayer > contentLayer, "Drifting holes stay behind content; mouse-controlled holes stay above it");
+}
+assert(backgroundHoleLayer > Number(read("src/components/FloatingObject/FloatingObject.module.css").match(/z-index:\s*(\d+)/)[1]), "Drifting holes still cover the space objects they swallow");
 const animationLoop = simulation.slice(simulation.indexOf("const tick ="), simulation.indexOf("const sync ="));
 assert(!/\bscrollY\b/.test(animationLoop), "Never read scrollY between planet/comet transform writes");
 
@@ -299,7 +308,9 @@ let transformWrites = 0, gravitySteps = 0, lastTransform = "";
 const planetStyle = { visibility: "" };
 const planetTexture = { width: 96, height: 96, dataset: { ready: "loading" } };
 let stripDraws = 0, snapshots = 0;
-document.createElement = () => ({ getContext: () => ({ translate() {}, rotate() {}, drawImage() { snapshots++; } }) });
+let ufoSnapshots = 0;
+const testUfoAtlas = {};
+document.createElement = () => ({ getContext: () => ({ translate() {}, rotate() {}, drawImage(source) { snapshots++; if (source === testUfoAtlas) ufoSnapshots++; } }) });
 Object.defineProperty(planetStyle, "translate", {
   get: () => lastTransform,
   set: (value) => { transformWrites++; lastTransform = value; },
@@ -325,25 +336,39 @@ const fireCanvas = {
     drawImage: (_image, ...geometry) => { assert(geometry.every(Number.isFinite)); stripDraws++; } }),
 };
 let damageRects = 0;
-const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, save() {}, restore() {}, fillRect() { damageRects++; } }) };
+let accretionDraws = 0;
+const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, save() {}, restore() {}, fillRect() { damageRects++; },
+  drawImage(_image, ...geometry) { assert(geometry.every(Number.isFinite)); accretionDraws++; } }) };
 let simulationRefs = 0;
+let cometUploads = 0;
+const cometNodes = Array.from({ length: 5 }, () => {
+  const source = { width: 192, height: 64, dataset: {}, getContext: () => ({
+    createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }),
+    clearRect() {}, putImageData(frame, x, y) {
+      assert.equal(frame.data.length, 40 * 40 * 4);
+      assert.equal(x + 20, 165); assert.equal(y + 20, 36, "Nucleus center aligns with the moving particle emitter");
+      cometUploads++;
+    },
+  }) };
+  return { style: {}, dataset: {}, offsetWidth: 174, querySelector: () => source };
+});
 const simulatedUfos = [];
 const missileLaunches = [];
 let simulationNow = 0;
-const pointerMedia = { matches: true };
+const pointerMedia = { matches: false };
 let body;
 const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
-  react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : initial }) },
+  react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : cometNodes }) },
   "@/lib/black-hole": blackHole,
+  "@/lib/comet-flight": cometHelpers,
   "@/lib/ufos": { ...ufoHelpers, fireAntimatter: (...args) => {
     const missile = ufoHelpers.fireAntimatter(...args);
     if (missile) missileLaunches.push(simulationNow);
     return missile;
-  }, createUfoAtlas: () => null, createUfo: (...args) => {
+  }, createUfoAtlas: () => testUfoAtlas, drawUfo() {}, createUfo: (...args) => {
     const ufo = ufoHelpers.createUfo(...args); simulatedUfos.push(ufo); return ufo;
   } },
   "@/lib/avatar-reaction": { avatarReaction },
-  "@/components/svg/PixelSprite": { PixelSprite: () => null },
   "@/lib/gravity": {
     PHYSICS_STEP: 1 / 60,
     seedOrbits: (bodies) => { body = bodies[0]; },
@@ -368,10 +393,18 @@ const cursorPosition = () => {
   return [Number(x) + blackHole.HOLE_WIDTH, Number(y) + blackHole.HOLE_HEIGHT];
 };
 advance(1000);
-assert.equal(holeCanvas.style.opacity, "1", "Mobile black holes appear on the very first frame");
-const mobileStart = cursorPosition();
+assert.equal(cometUploads, 1, "The first comet is painted immediately without an image download");
+assert.equal(holeCanvas.style.opacity, "1", "Desktop black holes appear on the first frame without any pointer input");
+assert.equal(scene.dataset.blackHoleActive, "false", "Desktop starts in the background without hiding the native cursor");
+const desktopStart = cursorPosition();
 advance(1010);
-assert.notDeepEqual(cursorPosition(), mobileStart, "Mobile wandering starts immediately without an idle delay");
+assert.equal(cometUploads, 1, "Unchanged comet shapes aren't repainted each frame");
+assert.notDeepEqual(cursorPosition(), desktopStart, "Desktop wandering starts immediately without an idle delay");
+pointerMedia.matches = true;
+const mobileStart = cursorPosition();
+advance(1015);
+assert.equal(holeCanvas.style.opacity, "1");
+assert.notDeepEqual(cursorPosition(), mobileStart, "Mobile also wanders immediately without pointer input");
 pointerMedia.matches = false;
 assert.equal(fireCanvas.dataset.ufoCount, "1", "Mobile keeps a single UFO");
 body.x = -1000;
@@ -395,10 +428,11 @@ assert.equal(textReads, 1, "Pointer movement doesn't trigger per-frame text layo
 assert(gazeTransforms.at(-1).startsWith("translate("));
 listeners.get("pointerout")({ relatedTarget: null });
 advance(1100);
-assert.equal(holeCanvas.style.opacity, "0", "Leaving the page restores the cursor");
+assert.equal(holeCanvas.style.opacity, "1", "Leaving the page keeps the background hole visible");
+assert.equal(scene.dataset.blackHoleActive, "false", "Leaving the page restores the native cursor");
 listeners.get("pointermove")({ pointerType: "touch", clientX: 320, clientY: 400 });
 advance(1120);
-assert.equal(holeCanvas.style.opacity, "0", "Touch doesn't create a mouse cursor");
+assert.equal(scene.dataset.blackHoleActive, "false", "Touch doesn't create a foreground mouse cursor");
 const nextWord = { style: {}, getBoundingClientRect: word.getBoundingClientRect };
 words = [nextWord]; changedText();
 planetTexture.dataset.ready = "true";
@@ -414,10 +448,21 @@ assert.equal(planetStyle.visibility, "hidden", "Captured bodies are hidden");
 assert.equal(avatar.dataset.holeMood, "worried", "Avatar is dismayed by a close black hole");
 const stepsAtCapture = gravitySteps;
 advance(1300);
+assert(accretionDraws > 0, "Swallowed terrain is rendered as texture fragments in the accretion disk");
 assert.equal(gravitySteps, stepsAtCapture, "Swallowed planets no longer pull on other bodies");
 assert(Number(fireCanvas.dataset.blackHoleRadius) > blackHole.START_RADIUS, "Actual captures grow the black hole");
 listeners.get("pointerout")({ relatedTarget: null });
-for (let now = 1400; now <= 12500; now += 100) advance(now);
+for (let now = 1400; now <= 12500; now += 100) {
+  listeners.get("pointermove")({ pointerType: "mouse", clientX: -10000, clientY: -10000 });
+  advance(now);
+}
+const expiredAccretionDraws = accretionDraws;
+listeners.get("pointermove")({ pointerType: "mouse", clientX: -10000, clientY: -10000 });
+advance(12510);
+assert.equal(accretionDraws, expiredAccretionDraws, "Old accretion debris is released rather than lingering after the hole returns");
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 250, clientY: 400 });
+listeners.get("pointerout")({ relatedTarget: null });
+assert.equal(new Set(cometNodes.slice(0, 3).map((node) => node.querySelector().dataset.variant)).size, 3, "Initial mobile comets have three distinct shapes");
 assert(gravitySteps > stepsAtCapture, "Captured planets are replenished after their cooldown");
 pointerMedia.matches = true;
 advance(12600); advance(12900); advance(13200); advance(13500); advance(13800);
@@ -475,22 +520,33 @@ for (let now = 43400; now <= 51400; now += 100) {
   previousCursor = point;
 }
 assert.notDeepEqual(cursorPosition(), [600, 400], "An idle black hole wanders away from the mouse");
+assert.equal(scene.dataset.blackHoleActive, "false", "Idle drift moves behind content and restores the native cursor");
 assert.equal(textReads, readsBeforeDrift, "Wandering doesn't add per-frame layout reads");
 assert.equal(frames.size, 1, "Wandering reuses the existing animation loop");
 listeners.get("pointermove")({ pointerType: "mouse", clientX: 610, clientY: 410 });
 advance(51500);
 assert.deepEqual(cursorPosition(), [610, 410], "Mouse movement immediately reclaims the black hole");
+assert.equal(scene.dataset.blackHoleActive, "true", "Mouse movement restores the foreground cursor layer");
 for (let now = 51600; now <= 54500; now += 100) advance(now);
 assert.deepEqual(cursorPosition(), [610, 410], "Moving the cursor restarts the idle delay");
 listeners.get("pointerout")({ relatedTarget: null });
 for (let now = 54600; now <= 57500; now += 100) advance(now);
-assert.equal(holeCanvas.style.opacity, "0", "Leaving the page disables idle wandering");
+assert.equal(holeCanvas.style.opacity, "1", "Leaving the page returns the hole to continuous background wandering");
+assert.equal(scene.dataset.blackHoleActive, "false");
 pointerMedia.matches = true;
 document.documentElement.clientWidth = 390;
 listeners.get("resize")();
 advance(57600);
 assert(cursorPosition()[0] >= 0 && cursorPosition()[0] <= 390, "A narrower mobile viewport keeps the wandering hole on screen");
 assert.equal(holeCanvas.style.opacity, "1");
+const capturedPilot = simulatedUfos.at(-1), ufoSnapshotsBefore = ufoSnapshots;
+Object.assign(capturedPilot, { age: 0, delay: 0, fuel: 0 });
+Object.assign(capturedPilot.body, { x: 300, y: globals.scrollY + 400, vx: 0, vy: 0 });
+pointerMedia.matches = false;
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 300, clientY: 400 });
+advance(57620);
+assert(ufoSnapshots > ufoSnapshotsBefore, "Captured UFOs contribute their actual pilot and hull texture to the disk");
+pointerMedia.matches = true;
 document.hidden = true;
 listeners.get("visibilitychange")();
 assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");

@@ -1,6 +1,38 @@
 import assert from "node:assert/strict";
 import { createTidalStream, crossedHorizon, drawTidalStream, growBlackHole, HORIZON, HOLE_WIDTH, HOLE_HEIGHT, MAX_RADIUS, paintBlackHole, pullIntoHole, respawnPlanet, START_RADIUS, stepTidalStream, tidalShape } from "../src/lib/black-hole.ts";
 import { PHYSICS_STEP } from "../src/lib/gravity.ts";
+import { drawAccretion, feedAccretion } from "../src/lib/black-hole.ts";
+
+const disk = [], texture = { width: 96, height: 96 };
+for (let i = 0; i < 100; i++) feedAccretion(disk, texture, i % 16, 16, i / 100, 0);
+assert.equal(disk.length, 32, "Accretion stays bounded even during a capture burst");
+assert.equal(disk[0].born, .68, "The oldest fragments make room for new material");
+const diskDraws = [], heating = [];
+const diskContext = { save() {}, restore() {},
+  drawImage(image, ...geometry) { assert.equal(image, texture); diskDraws.push({ geometry, alpha: this.globalAlpha }); },
+  fillRect() { heating.push(this.globalAlpha); },
+};
+drawAccretion(diskContext, disk, 1.2);
+assert(diskDraws.length > 0 && diskDraws.length <= 96, "Each fragment draws at most three tiny texture patches");
+for (const { geometry, alpha } of diskDraws) {
+  assert(geometry.every(Number.isFinite));
+  assert(alpha >= 0 && alpha <= 1);
+  const [sx, sy, sw, sh, x, y, w, h] = geometry;
+  assert(sx >= 0 && sx + sw <= 96 && sy >= 0 && sy + sh <= 96, "Accretion samples the captured texture, not an unrelated sprite");
+  assert(x >= 0 && y >= 0 && x + w <= HOLE_WIDTH && y + h <= HOLE_HEIGHT, "Disk remains inside the tiny cursor canvas");
+  const px = x + w / 2 - HOLE_WIDTH / 2, py = y + h / 2 - HOLE_HEIGHT / 2;
+  assert(px * .342 + py * .94 > 1 || Math.hypot(px, py) >= 15, "The far side cannot paint across the black core");
+}
+const firstDisk = JSON.stringify(diskDraws), firstHeat = Math.max(...heating);
+diskDraws.length = heating.length = 0;
+drawAccretion(diskContext, disk, 3);
+assert.notEqual(JSON.stringify(diskDraws), firstDisk, "Captured texture orbits and spirals inward");
+assert(Math.max(...heating) > firstHeat, "Original colors gradually heat toward amber and ivory");
+diskDraws.length = 0;
+drawAccretion(diskContext, disk, 6);
+assert.equal(diskDraws.length, 0, "Material fades completely after five seconds");
+drawAccretion(diskContext, disk, -1);
+assert.equal(diskDraws.length, 0, "Future captures aren't drawn early");
 
 const hole = { x: 0, y: 0, strength: 1 };
 const makeBody = (mass = 200) => ({ x: 450, y: 60, vx: 0, vy: 100, mass });

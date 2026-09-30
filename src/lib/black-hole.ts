@@ -129,7 +129,7 @@ export function respawnPlanet(body: GravityBody, width: number, height: number, 
 }
 
 export type TidalStream = {
-  fragments: (GravityBody & { swallowed: boolean })[];
+  fragments: (GravityBody & { swallowed: boolean; accreted?: boolean })[];
   diameter: number;
   age: number;
   angle: number;
@@ -196,6 +196,51 @@ export function drawTidalStream(context: CanvasRenderingContext2D, image: HTMLCa
       context.restore();
     }
   });
+  context.restore();
+}
+
+export type AccretionShard = {
+  image: HTMLCanvasElement;
+  column: number;
+  columns: number;
+  born: number;
+  angle: number;
+};
+
+export function feedAccretion(disk: AccretionShard[], image: HTMLCanvasElement, column: number, columns: number, born: number, angle: number) {
+  if (disk.length >= 32) disk.shift();
+  disk.push({ image, column, columns, born, angle });
+}
+
+// The same tiny canvas and tilted ellipse as the cached disk. Terrain colors
+// shear into short arcs, heat up, and fade; the far side stays behind the core.
+export function drawAccretion(context: CanvasRenderingContext2D, disk: AccretionShard[], seconds: number) {
+  context.save();
+  context.imageSmoothingEnabled = false;
+  for (const shard of disk) {
+    const age = seconds - shard.born;
+    if (age < 0 || age >= 5) continue;
+    const heat = age / 5;
+    const fade = Math.min(1, age * 8, (5 - age) * .8);
+    const radius = 36 - heat * 15 + (shard.column % 4 - 1.5) * .7;
+    const orbit = shard.angle + shard.column * .17 + age * (2.5 + shard.column % 3 * .2) + age * age * .15;
+    for (let part = 0; part < 3; part++) {
+      const angle = orbit - part * (.07 + heat * .15);
+      const rx = Math.cos(angle) * radius, ry = Math.sin(angle) * radius * 9 / 39;
+      const px = rx * .94 + ry * .342, py = -rx * .342 + ry * .94;
+      // Leave room for the whole pixel patch, not just its center, behind the core.
+      if (ry <= 2 && Math.hypot(px, py) < 16) continue;
+      const x = Math.round(HOLE_WIDTH / 2 + px), y = Math.round(HOLE_HEIGHT / 2 + py);
+      const alpha = fade * (1 - part * .22);
+      context.globalAlpha = alpha;
+      context.drawImage(shard.image, shard.column * shard.image.width / shard.columns,
+        shard.image.height * (.2 + part * .2), shard.image.width / shard.columns, shard.image.height * .2,
+        x - 2, y - 1, 4, 2);
+      context.globalAlpha = alpha * heat * .75;
+      context.fillStyle = heat < .6 ? "#ffb35c" : "#fff0c4";
+      context.fillRect(x - 2, y - 1, 4, 2);
+    }
+  }
   context.restore();
 }
 

@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import {
   createCometFlight,
@@ -8,24 +7,40 @@ import {
   recordCometTrail,
   cometEmbers,
   drawCometFire,
+  paintCometHead, COMET_HEAD_SIZE, COMET_VARIANTS,
 } from "../src/lib/comet-flight.ts";
 import { stepGravity, PHYSICS_STEP } from "../src/lib/gravity.ts";
 const require = createRequire(import.meta.url);
 const sharp = require(
   require.resolve("sharp", { paths: [require.resolve("next/package.json")] }),
 );
-const { data, info } = await sharp(
-  fileURLToPath(new URL("../public/space/comet-pixel.webp", import.meta.url)),
-)
-  .ensureAlpha()
-  .raw()
-  .toBuffer({ resolveWithObject: true });
-assert.equal(info.width / info.height, 3);
-assert.equal(info.width, 192, "Download sprite at its actual canvas resolution");
-assert(
-  data[3] <= 2 && data[data.length - 1] <= 2,
-  "Head artwork keeps transparent corners",
-);
+const heads = Array.from({ length: COMET_VARIANTS }, (_, variant) => {
+  const pixels = new Uint8ClampedArray(COMET_HEAD_SIZE ** 2 * 4);
+  paintCometHead(pixels, variant);
+  assert.equal(pixels[3], 0);
+  assert.equal(pixels[pixels.length - 1], 0, "Nuclei have transparent corners and no baked-in tail");
+  assert(pixels.filter((value, i) => i % 4 === 3 && value).length > 200, "Every variant has a readable solid body");
+  const again = new Uint8ClampedArray(pixels.length).fill(255);
+  paintCometHead(again, variant);
+  assert.deepEqual(again, pixels, "Painting clears stale pixels and is deterministic");
+  return pixels;
+});
+for (let i = 0; i < heads.length; i++) for (let j = i + 1; j < heads.length; j++) {
+  const different = heads[i].filter((value, p) => p % 4 === 3 && value !== heads[j][p]).length;
+  assert(different > 100, "Every pair differs in silhouette, not just color");
+}
+if (process.argv[2]) {
+  const width = COMET_HEAD_SIZE * COMET_VARIANTS, height = COMET_HEAD_SIZE;
+  const sheet = new Uint8ClampedArray(width * height * 4);
+  for (let p = 0; p < sheet.length; p += 4) sheet.set([13, 18, 36, 255], p);
+  heads.forEach((pixels, variant) => {
+    for (let y = 0; y < height; y++) for (let x = 0; x < COMET_HEAD_SIZE; x++) {
+      const from = (y * COMET_HEAD_SIZE + x) * 4;
+      if (pixels[from + 3]) sheet.set(pixels.subarray(from, from + 4), (y * width + variant * COMET_HEAD_SIZE + x) * 4);
+    }
+  });
+  await sharp(sheet, { raw: { width, height, channels: 4 } }).resize(width * 4, height * 4, { kernel: "nearest" }).png().toFile(process.argv[2]);
+}
 const component = readFileSync(
   new URL("../src/components/Comets/SpaceSimulation.tsx", import.meta.url),
   "utf8",
@@ -38,20 +53,8 @@ assert(
   component.includes("data-comet-fire"),
   "One shared world-space fire canvas",
 );
-const outline = [...css.match(/clip-path: polygon\(([\s\S]*?)\);/)[1]
-  .matchAll(/([\d.]+)%\s+([\d.]+)%/g)].map((m) => [+m[1], +m[2]]);
-const insideHead = (x, y) => {
-  let inside = false;
-  for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
-    const [ax, ay] = outline[i], [bx, by] = outline[j];
-    if ((ay > y) !== (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax)
-      inside = !inside;
-  }
-  return inside;
-};
-assert(insideHead(88, 56), "Keep the detailed nucleus");
-for (const [x, y] of [[76, 56], [80, 38], [82, 82], [90, 88]])
-  assert(!insideHead(x, y), "Exclude baked-in flame above, behind and below nucleus");
+assert(!component.includes("comet-pixel.webp"), "Comets no longer download the repeated sprite");
+assert(!css.includes("clip-path"), "Each nucleus owns its outline instead of sharing a clipping mask");
 assert(css.includes("prefers-reduced-motion"));
 let seed = 29;
 const random = () => {
@@ -59,8 +62,11 @@ const random = () => {
   return seed / 2 ** 32;
 };
 const edges = new Set();
+const variantsByHue = new Map();
 for (let i = 0; i < 300; i++) {
   const f = createCometFlight(390, 844, random);
+  const variants = variantsByHue.get(f.hue) ?? new Set();
+  variants.add(f.variant); variantsByHue.set(f.hue, variants);
   const edge = (p) =>
     p.y < 0 ? "top" : p.x > 390 ? "right" : p.y > 844 ? "bottom" : "left";
   edges.add(edge(f.body));
@@ -77,6 +83,7 @@ for (let i = 0; i < 300; i++) {
   }
 }
 assert.equal(edges.size, 4);
+for (const variants of variantsByHue.values()) assert.equal(variants.size, COMET_VARIANTS, "Shape varies independently of color");
 const f = createCometFlight(550, 400, random);
 f.body = { x: 0, y: 240, vx: 180, vy: -100, mass: 0.15 };
 f.trail = [];

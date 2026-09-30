@@ -5,15 +5,17 @@ import {
   createCometFlight,
   recordCometTrail,
   drawCometFire,
+  paintCometHead, COMET_HEAD_SIZE, COMET_VARIANTS,
   type CometFlight,
 } from "@/lib/comet-flight";
-import { PixelSprite } from "@/components/svg/PixelSprite";
 import styles from "./Comets.module.css";
 import { PHYSICS_STEP, seedOrbits, stepGravity, type GravityBody } from "@/lib/gravity";
 import { createTidalStream, crossedHorizon, drawTidalStream, growBlackHole, HORIZON, HOLE_HEIGHT, HOLE_WIDTH, paintBlackHole, pullIntoHole, respawnPlanet, START_RADIUS, stepTidalStream, tidalShape, type BlackHole, type TidalStream } from "@/lib/black-hole";
 import { createUfo, createUfoAtlas, drawUfo, drawAntimatter, fireAntimatter, steerUfo, type Ufo } from "@/lib/ufos";
 import { drawBlackHoleDamage, stepAntimatter, textBulge, type AntimatterMissile } from "@/lib/black-hole";
 import { avatarReaction } from "@/lib/avatar-reaction";
+import { drawAccretion, feedAccretion, type AccretionShard } from "@/lib/black-hole";
+import { UFO_WIDTH, UFO_HEIGHT } from "@/lib/ufos";
 
 export function SpaceSimulation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,13 +48,16 @@ export function SpaceSimulation() {
       return frame;
     });
     let mouseInside = false;
-    let pointerX = coarse.matches ? document.documentElement.clientWidth * .65 : 0;
-    let pointerY = coarse.matches ? innerHeight * .4 : 0;
+    let pointerX = document.documentElement.clientWidth * .65;
+    let pointerY = innerHeight * .4;
     let lastPointerMove = 0, nextDriftTarget = 0, driftX = 0, driftY = 0;
     let elapsed = 0, lastHoleFrame = -1;
     let captures = 0, lastDebris = 0;
     const debris: (GravityBody & { life: number; color: string; size: number })[] = [];
     let streams: { effect: TidalStream; image: HTMLCanvasElement }[] = [];
+    const cometHeads: ImageData[] = [];
+    let accretion: AccretionShard[] = [];
+    let lastAccretionFrame = -1;
     const disrupt = (body: GravityBody, source: HTMLCanvasElement | null, diameter: number, hue?: number) => {
       if (source?.dataset.ready !== "true" || streams.length >= 18) return false;
       const image = document.createElement("canvas");
@@ -66,8 +71,8 @@ export function SpaceSimulation() {
       if (hue === undefined) paint.drawImage(source, -48, -48, 96, 96);
       else {
         paint.filter = `sepia(1) saturate(4) hue-rotate(${hue - 25}deg)`;
-        // Only the rocky nucleus, never the sprite's baked-in tail.
-        paint.drawImage(source, 155, 23, 31, 30, -16, -16, 32, 32);
+        // Same tail-free nucleus used by the live sprite, including its silhouette.
+        paint.drawImage(source, 145, 16, COMET_HEAD_SIZE, COMET_HEAD_SIZE, -16, -16, 32, 32);
       }
       streams.push({ effect: createTidalStream(body, hole, diameter), image });
       return true;
@@ -101,6 +106,8 @@ export function SpaceSimulation() {
       planets.forEach(({ node }) => { node.style.translate = ""; node.style.visibility = ""; node.style.transform = ""; node.style.opacity = ""; });
       debris.length = 0;
       streams = [];
+      accretion = [];
+      lastAccretionFrame = -1;
       missiles = [];
       lastMissileHit = -Infinity;
       scene.dataset.gravityActive = String(!reduced.matches);
@@ -123,7 +130,7 @@ export function SpaceSimulation() {
       });
       groups.forEach(seedOrbits);
       flights = nodes.current.slice(0, canvas.width <= 540 ? 3 : 5).map((node, i) => ({
-        path: spawn(),
+        path: { ...spawn(), variant: i % COMET_VARIANTS },
         delay: i * 0.9,
         width: node?.offsetWidth || 240,
         source: node?.querySelector<HTMLCanvasElement>("canvas") ?? null,
@@ -141,8 +148,8 @@ export function SpaceSimulation() {
       accumulated += dt;
       elapsed += dt;
       previous = now;
-      const idle = coarse.matches ? 1 : elapsed - lastPointerMove - 4;
-      if (coarse.matches || (mouseInside && idle > 0)) {
+      const idle = coarse.matches || !mouseInside ? 1 : elapsed - lastPointerMove - 4;
+      if (idle > 0) {
         if (elapsed >= nextDriftTarget) {
           driftX = canvas.width * (.15 + Math.random() * .7);
           driftY = canvas.height * (.15 + Math.random() * .7);
@@ -156,7 +163,7 @@ export function SpaceSimulation() {
       }
       hole.x = pointerX;
       hole.y = pointerY + cameraY;
-      hole.strength = Number(coarse.matches || mouseInside);
+      hole.strength = 1;
       while (accumulated >= PHYSICS_STEP) {
         streams.forEach(({ effect }) => stepTidalStream(effect, hole, PHYSICS_STEP));
         planets.forEach((planet) => {
@@ -203,9 +210,28 @@ export function SpaceSimulation() {
           growBlackHole(hole, body.mass);
           const planet = livePlanets[i];
           shed(body, planet ? 18 : 8, planet?.color ?? "#ff9e60");
-          if (planet) planet.delay = 6 + Math.random() * 4;
-          else if (i < livePlanets.length + active.length) active[i - livePlanets.length].path.duration = active[i - livePlanets.length].path.age;
-          else restartUfo(liveUfos[i - livePlanets.length - active.length]);
+          if (planet) {
+            if (!planet.disrupted) planet.disrupted = disrupt(body, planet.source, planet.diameter);
+            planet.delay = 6 + Math.random() * 4;
+          } else if (i < livePlanets.length + active.length) {
+            const flight = active[i - livePlanets.length];
+            if (!flight.disrupted) flight.disrupted = disrupt(body, flight.source, flight.width * .17, flight.path.hue);
+            flight.path.duration = flight.path.age;
+          } else {
+            const ufo = liveUfos[i - livePlanets.length - active.length];
+            if (ufoAtlas === undefined) ufoAtlas = createUfoAtlas();
+            if (ufoAtlas) {
+              const image = document.createElement("canvas");
+              image.width = UFO_WIDTH; image.height = UFO_HEIGHT;
+              const paint = image.getContext("2d");
+              if (paint) {
+                paint.drawImage(ufoAtlas, (ufo.panic ? 8 : 0) * UFO_WIDTH, ufo.kind * UFO_HEIGHT, UFO_WIDTH, UFO_HEIGHT, 0, 0, UFO_WIDTH, UFO_HEIGHT);
+                for (let column = 0; column < 6; column++)
+                  feedAccretion(accretion, image, column, 6, elapsed, Math.atan2(body.y - hole.y, body.x - hole.x));
+              }
+            }
+            restartUfo(ufo);
+          }
         });
         flights.forEach((flight) => {
           if (flight.delay > 0) { flight.delay -= PHYSICS_STEP; return; }
@@ -311,6 +337,22 @@ export function SpaceSimulation() {
           node.style.opacity = "0";
           return;
         }
+        const source = flight.source;
+        if (source && source.dataset.variant !== String(flight.path.variant)) {
+          const paint = source.getContext("2d");
+          if (paint) {
+            const variant = flight.path.variant;
+            if (!cometHeads[variant]) {
+              const frame = paint.createImageData(COMET_HEAD_SIZE, COMET_HEAD_SIZE);
+              paintCometHead(frame.data, variant);
+              cometHeads[variant] = frame;
+            }
+            paint.clearRect(0, 0, source.width, source.height);
+            paint.putImageData(cometHeads[variant], 145, 16);
+            source.dataset.variant = String(variant);
+            source.dataset.ready = "true";
+          }
+        }
         drawCometFire(context, flight.path, flight.path.age, flight.width / 192, { top: cameraY, bottom: cameraY + canvas.height, left: 0, right: canvas.width });
         const { x, y, vx, vy } = flight.path.body;
         const tide = tidalShape(flight.path.body, hole);
@@ -331,6 +373,13 @@ export function SpaceSimulation() {
         }
         visibleFlights++;
       });
+      // Transfer each absorbed texture slice once, before removing exhausted streams.
+      accretion = accretion.filter((shard) => elapsed - shard.born < 5);
+      streams.forEach(({ effect, image }) => effect.fragments.forEach((fragment, column) => {
+        if (!fragment.swallowed || fragment.accreted) return;
+        fragment.accreted = true;
+        feedAccretion(accretion, image, column, effect.fragments.length, elapsed, effect.angle + Math.PI);
+      }));
       streams = streams.filter(({ effect }) => effect.age < 4 && effect.fragments.some((fragment) => !fragment.swallowed));
       streams.forEach(({ effect, image }) => drawTidalStream(context, image, effect, hole));
       if (elapsed - lastDebris > .035) lastDebris = elapsed;
@@ -350,7 +399,7 @@ export function SpaceSimulation() {
       }
       debris.length = alive;
       context.restore();
-      const cursorActive = String(hole.strength > 0 && !coarse.matches);
+      const cursorActive = String(hole.strength > 0 && !coarse.matches && idle <= 0);
       if (scene.dataset.blackHoleActive !== cursorActive) scene.dataset.blackHoleActive = cursorActive;
       holeCanvas.style.opacity = String(hole.strength);
       if (hole.strength > 0) {
@@ -362,10 +411,12 @@ export function SpaceSimulation() {
         holeCanvas.style.transform = `translate3d(${pointerX - HOLE_WIDTH + kickX}px, ${pointerY - HOLE_HEIGHT + kickY}px, 0) scale(${displayedRadius / HORIZON * (.6 + hole.strength * .4)})`;
         const frame = Math.floor(elapsed * 12) % holeFrames.length;
         const damageFrame = damageAge < .7 ? Math.floor(damageAge * 18) : -1;
-        if (frame !== lastHoleFrame || damageFrame !== lastDamageFrame) {
+        const accretionFrame = accretion.length ? Math.floor(elapsed * 30) : -1;
+        if (frame !== lastHoleFrame || damageFrame !== lastDamageFrame || accretionFrame !== lastAccretionFrame) {
           holeContext.putImageData(holeFrames[frame], 0, 0);
+          drawAccretion(holeContext, accretion, elapsed);
           drawBlackHoleDamage(holeContext, damageAge);
-          lastHoleFrame = frame; lastDamageFrame = damageFrame;
+          lastHoleFrame = frame; lastDamageFrame = damageFrame; lastAccretionFrame = accretionFrame;
         }
       }
       if (now - lastDiagnostic >= 250) {
@@ -412,7 +463,7 @@ export function SpaceSimulation() {
       lastPointerMove = elapsed;
       nextDriftTarget = 0;
     };
-    const pointerLeft = () => { mouseInside = false; holeCanvas.style.opacity = "0"; delete scene.dataset.blackHoleActive; };
+    const pointerLeft = () => { mouseInside = false; nextDriftTarget = 0; delete scene.dataset.blackHoleActive; };
     const pointerOut = (event: PointerEvent) => { if (!coarse.matches && !event.relatedTarget) pointerLeft(); };
     const layoutObserver = new ResizeObserver(() => { anchorsDirty = true; worldHeight = scene.offsetHeight; });
     layoutObserver.observe(scene);
@@ -454,7 +505,6 @@ export function SpaceSimulation() {
   return (
     <>
     <div className={styles.layer} aria-hidden="true">
-      <link rel="preload" as="image" href="/space/comet-pixel.webp" />
       <canvas ref={canvasRef} className={styles.fire} data-comet-fire />
       {[0, 1, 2, 3, 4].map((i) => (
         <span
@@ -465,9 +515,8 @@ export function SpaceSimulation() {
           className={styles.comet}
           data-comet
         >
-          <PixelSprite
+          <canvas
             className={styles.head}
-            src="/space/comet-pixel.webp"
             width={192}
             height={64}
           />

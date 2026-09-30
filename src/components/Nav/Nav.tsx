@@ -6,7 +6,7 @@ export function Nav() {
   return (
     <nav className={styles.nav}>
       <Link href="/" className={styles.logo} aria-label={`${name} — home`}>
-        <span className={styles.stack} aria-hidden="true">
+        <span className={styles.stack} aria-hidden="true" data-hole-text>
           <span className={`${styles.layer} ${styles.layerCyan}`}>{name}</span>
           <span className={`${styles.layer} ${styles.layerMagenta}`}>{name}</span>
           <span className={`${styles.layer} ${styles.layerTop}`}>{name}</span>
@@ -14,7 +14,7 @@ export function Nav() {
         <span className={styles.srOnly}>{name}</span>
       </Link>
       <div className={styles.links}>
-        <Link href="/blog">Blog</Link>
+        <Link href="/blog"><span data-hole-text>Blog</span></Link>
       </div>
     </nav>
   );

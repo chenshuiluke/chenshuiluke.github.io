@@ -8,6 +8,8 @@ import ts from "typescript";
 import { renderToStaticMarkup } from "react-dom/server";
 import config from "../velite.config.ts";
 import * as blackHole from "../src/lib/black-hole.ts";
+import * as ufoHelpers from "../src/lib/ufos.ts";
+import { avatarReaction } from "../src/lib/avatar-reaction.ts";
 
 const require = createRequire(import.meta.url);
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -23,6 +25,20 @@ function load(path, mocks = {}, globals = {}) {
     compiled, compiled.exports,
   );
   return compiled.exports;
+}
+
+const { GravityText } = load("src/components/GravityText/GravityText.tsx");
+const sampleText = "Hello, I'm Luke.  Pixel art!";
+const textMarkup = renderToStaticMarkup(GravityText({ children: sampleText }));
+assert.equal(textMarkup.replace(/<[^>]+>/g, "").replaceAll("&#x27;", "'"), sampleText, "Word spans preserve readable, selectable text and whitespace");
+const lens = { x: 0, y: 0, radius: 18, strength: 1 };
+assert.deepEqual(blackHole.textBulge({ ...lens, strength: 0 }, 50, 50), { x: 0, y: 0, scale: 1 });
+assert.equal(blackHole.textBulge(lens, 500, 0).scale, 1, "Distant text stays untouched");
+assert(blackHole.textBulge(lens, -80, 0).x > 0 && blackHole.textBulge(lens, 80, 0).x < 0, "Text leans toward, not away from, the hole");
+for (let x = -250; x <= 250; x += 10) {
+  const bulge = blackHole.textBulge(lens, x, 0);
+  assert(Object.values(bulge).every(Number.isFinite));
+  assert(Math.abs(bulge.x) <= 7 && bulge.scale >= 1 && bulge.scale <= 1.055, "Bulging stays subtle even at the center");
 }
 
 const published = { title: "Published", slug: "published", permalink: "/blog/published", summary: "Public post", date: "2026-01-01", tags: ["machine learning", "café", "100%"], draft: false };
@@ -44,6 +60,7 @@ const draft = { ...published, title: "Secret draft", slug: "secret", permalink: 
   const motion = { matches: false, addEventListener: (_, fn) => handlers.set("motion", fn), removeEventListener: () => handlers.delete("motion") };
   const page = { hidden: false, addEventListener: (_, fn) => handlers.set("visibility", fn), removeEventListener: () => handlers.delete("visibility") };
   const { PostHighlights } = load("src/components/RecentPosts/PostHighlights.tsx", {
+    "@/components/GravityText/GravityText": { GravityText },
     react: {
       useState: (initial) => {
         const slot = cursor++;
@@ -294,19 +311,32 @@ const planet = {
   getBoundingClientRect: () => ({ x: 100, y: 100, width: 100, height: 100 }),
   closest: () => null,
 };
-const scene = { dataset: {}, offsetHeight: 4000, querySelectorAll: () => [planet] };
+const gazeTransforms = [];
+const avatar = { dataset: {}, getBoundingClientRect: () => ({ x: 100, y: 80, width: 150, height: 150 }),
+  querySelectorAll: () => [{ setAttribute: (_name, value) => gazeTransforms.push(value) }] };
+let textReads = 0, changedText, textObserverDisconnected = false;
+const word = { style: {}, getBoundingClientRect: () => { textReads++; return { x: 260, y: 380, width: 60, height: 20 }; } };
+let words = [word];
+const scene = { dataset: {}, offsetHeight: 4000, querySelectorAll: (selector) => selector === "[data-hole-text]" ? words : [planet], querySelector: () => avatar,
+  addEventListener() {}, removeEventListener() {} };
 const fireCanvas = {
   width: 390, height: 844, dataset: {}, closest: () => scene,
   getContext: () => ({ clearRect() {}, save() {}, restore() {}, translate() {}, rotate() {}, fillRect() {},
     drawImage: (_image, ...geometry) => { assert(geometry.every(Number.isFinite)); stripDraws++; } }),
 };
-const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {} }) };
+let damageRects = 0;
+const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, save() {}, restore() {}, fillRect() { damageRects++; } }) };
 let simulationRefs = 0;
+const simulatedUfos = [];
 const pointerMedia = { matches: false };
 let body;
 const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
   react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : initial }) },
   "@/lib/black-hole": blackHole,
+  "@/lib/ufos": { ...ufoHelpers, createUfoAtlas: () => null, createUfo: (...args) => {
+    const ufo = ufoHelpers.createUfo(...args); simulatedUfos.push(ufo); return ufo;
+  } },
+  "@/lib/avatar-reaction": { avatarReaction },
   "@/components/svg/PixelSprite": { PixelSprite: () => null },
   "@/lib/gravity": {
     PHYSICS_STEP: 1 / 60,
@@ -317,6 +347,7 @@ const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
   ...globals,
   matchMedia: (query) => query.includes("pointer: coarse") ? pointerMedia : motion,
   ResizeObserver: class { observe() {} disconnect() {} },
+  MutationObserver: class { constructor(callback) { changedText = callback; } observe() {} disconnect() { textObserverDisconnected = true; } },
 });
 SpaceSimulation();
 const cleanupSimulation = effect();
@@ -326,6 +357,7 @@ const advance = (now) => {
   callback(now);
 };
 advance(1000);
+assert.equal(fireCanvas.dataset.ufoCount, "1", "Mobile keeps a single UFO");
 body.x = -1000;
 advance(1020);
 assert.equal(planetStyle.visibility, "hidden");
@@ -341,21 +373,29 @@ listeners.get("pointermove")({ pointerType: "mouse", clientX: 320, clientY: 400 
 advance(1080);
 assert.equal(scene.dataset.blackHoleActive, "true", "Mouse replaces the cursor with a black hole");
 assert.equal(holeCanvas.style.opacity, "1");
+assert.equal(avatar.dataset.holeMood, "watching", "Avatar follows a distant black hole");
+assert.match(word.style.transform, /scale\(1\.0/, "Nearby text bulges in the real animation loop");
+assert.equal(textReads, 1, "Pointer movement doesn't trigger per-frame text layout reads");
+assert(gazeTransforms.at(-1).startsWith("translate("));
 listeners.get("pointerout")({ relatedTarget: null });
 advance(1100);
 assert.equal(holeCanvas.style.opacity, "0", "Leaving the page restores the cursor");
 listeners.get("pointermove")({ pointerType: "touch", clientX: 320, clientY: 400 });
 advance(1120);
 assert.equal(holeCanvas.style.opacity, "0", "Touch doesn't create a mouse cursor");
+const nextWord = { style: {}, getBoundingClientRect: word.getBoundingClientRect };
+words = [nextWord]; changedText();
 planetTexture.dataset.ready = "true";
-listeners.get("pointermove")({ pointerType: "mouse", clientX: body.x + 150, clientY: body.y - globals.scrollY });
+listeners.get("pointermove")({ pointerType: "mouse", clientX: body.x + 60, clientY: body.y - globals.scrollY });
 advance(1140);
+assert.equal(textReads, 2, "Rotating blog excerpts refresh the cached word anchors");
 assert.equal(snapshots, 1, "Disruption snapshots the real rotating planet texture once");
 assert(stripDraws > 0, "The simulation renders the independent textured strips");
 assert.equal(planetStyle.visibility, "hidden", "Strands replace the original planet rather than duplicating it");
 listeners.get("pointermove")({ pointerType: "mouse", clientX: body.x, clientY: body.y - globals.scrollY });
 advance(1200);
 assert.equal(planetStyle.visibility, "hidden", "Captured bodies are hidden");
+assert.equal(avatar.dataset.holeMood, "worried", "Avatar is dismayed by a close black hole");
 const stepsAtCapture = gravitySteps;
 advance(1300);
 assert.equal(gravitySteps, stepsAtCapture, "Swallowed planets no longer pull on other bodies");
@@ -369,10 +409,20 @@ assert(Number(holeCanvas.style.opacity) > 0, "Coarse-pointer devices spawn a bla
 assert.equal(scene.dataset.blackHoleActive, "false", "Mobile never hides a native cursor");
 for (let now = 13900; now <= 22000; now += 100) advance(now);
 assert.equal(holeCanvas.style.opacity, "0", "Mobile bursts end instead of permanently covering content");
+pointerMedia.matches = false;
+const pilot = simulatedUfos[0];
+Object.assign(pilot, { age: 0, delay: 0, weaponCooldown: 0 });
+Object.assign(pilot.body, { x: 300, y: globals.scrollY + 200, vx: 0, vy: 0 });
+const hitsBefore = Number(fireCanvas.dataset.antimatterHits), damageBefore = damageRects;
+listeners.get("pointermove")({ pointerType: "mouse", clientX: 100, clientY: 200 });
+for (let now = 22100; now <= 23400; now += 100) advance(now);
+assert(Number(fireCanvas.dataset.antimatterHits) > hitsBefore, "Shared simulation launches and lands UFO missiles");
+assert(damageRects > damageBefore, "Real missile impacts render damage on the black-hole canvas");
 document.hidden = true;
 listeners.get("visibilitychange")();
 assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");
 assert.equal(holeCanvas.style.opacity, "0");
+assert.equal(nextWord.style.transform, "", "Hidden tabs restore undistorted text");
 document.hidden = false;
 listeners.get("visibilitychange")();
 motion.matches = true;
@@ -386,6 +436,9 @@ assert.equal(planetStyle.visibility, "");
 assert.equal(frames.size, 0);
 assert.equal(listeners.size, 0);
 assert.equal(scene.dataset.blackHoleActive, undefined);
+assert.equal(avatar.dataset.holeMood, undefined, "Avatar returns to its original expression on cleanup");
+assert(textObserverDisconnected, "Text observer is cleaned up");
+assert.equal(nextWord.style.transform, "");
 console.log("Off-screen gravity, transform culling, re-entry and cleanup checks passed");
 
 const workerFrames = new Map(), workerMessages = [], paintedTurns = [];

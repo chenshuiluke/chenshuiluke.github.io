@@ -11,6 +11,9 @@ import { PixelSprite } from "@/components/svg/PixelSprite";
 import styles from "./Comets.module.css";
 import { PHYSICS_STEP, seedOrbits, stepGravity, type GravityBody } from "@/lib/gravity";
 import { createTidalStream, crossedHorizon, drawTidalStream, growBlackHole, HORIZON, HOLE_HEIGHT, HOLE_WIDTH, paintBlackHole, pullIntoHole, respawnPlanet, START_RADIUS, stepTidalStream, tidalShape, type BlackHole, type TidalStream } from "@/lib/black-hole";
+import { createUfo, createUfoAtlas, drawUfo, drawAntimatter, fireAntimatter, steerUfo, type Ufo } from "@/lib/ufos";
+import { drawBlackHoleDamage, stepAntimatter, textBulge, type AntimatterMissile } from "@/lib/black-hole";
+import { avatarReaction } from "@/lib/avatar-reaction";
 
 export function SpaceSimulation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,6 +27,15 @@ export function SpaceSimulation() {
     if (!canvas || !context || !holeCanvas || !holeContext) return;
     const scene = canvas.closest<HTMLElement>("[data-space-scene]");
     if (!scene) return;
+    const avatar = scene.querySelector<HTMLElement>("[data-space-avatar]");
+    const pupils = avatar?.querySelectorAll<SVGElement>("[data-avatar-pupil]");
+    let faceX = 0, faceY = 0, lastGaze = "";
+    let textNodes: { node: HTMLElement; x: number; y: number; tx: number; ty: number; scale: number; transform: string }[] = [];
+    let textChanged = true;
+    const restoreText = () => textNodes.forEach((text) => {
+      text.node.style.transform = "";
+      text.tx = text.ty = 0; text.scale = 1; text.transform = "";
+    });
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const coarse = matchMedia("(hover: none), (pointer: coarse)");
     const hole: BlackHole = { x: 0, y: 0, strength: 0, radius: START_RADIUS };
@@ -71,15 +83,27 @@ export function SpaceSimulation() {
     let cameraY = scrollY;
     let planets: { node: HTMLElement; source: HTMLCanvasElement | null; diameter: number; disrupted: boolean; disruptedAt: number; body: GravityBody; tx: number; ty: number; anchorX: number; anchorY: number; radius: number; visible: boolean; delay: number; color: string }[] = [];
     let flights: { path: CometFlight; delay: number; width: number; source: HTMLCanvasElement | null; disrupted: boolean; disruptedAt: number }[] = [];
+    let ufos: Ufo[] = [];
+    let missiles: AntimatterMissile[] = [];
+    let missileHits = 0;
+    let lastMissileHit = -Infinity, lastDamageFrame = -1;
+    let ufoAtlas: HTMLCanvasElement | null | undefined;
+    const restartUfo = (ufo: Ufo) => {
+      Object.assign(ufo, createUfo((ufo.kind + 1) % 3, canvas.width, canvas.height, cameraY));
+      ufo.delay = 4 + Math.random() * 3;
+    };
     const spawn = () => createCometFlight(canvas.width, canvas.height, Math.random, cameraY, planets.map((p) => p.body));
     const reset = () => {
       planets.forEach(({ node }) => { node.style.translate = ""; node.style.visibility = ""; node.style.transform = ""; node.style.opacity = ""; });
       debris.length = 0;
       streams = [];
+      missiles = [];
+      lastMissileHit = -Infinity;
       scene.dataset.gravityActive = String(!reduced.matches);
       canvas.width = document.documentElement.clientWidth;
       canvas.height = innerHeight;
       worldHeight = scene.offsetHeight;
+      ufos = Array.from({ length: canvas.width <= 540 ? 1 : 2 }, (_, i) => createUfo(i, canvas.width, canvas.height, cameraY));
       const groups = new Map<Element, GravityBody[]>();
       planets = [...scene.querySelectorAll<HTMLElement>("[data-planet]")].map((node) => {
         const rect = node.getBoundingClientRect();
@@ -94,7 +118,7 @@ export function SpaceSimulation() {
           body, tx: 0, ty: 0, anchorX: body.x, anchorY: body.y, radius: Math.max(rect.width, rect.height) / 2 + 32, visible: true, delay: 0, color };
       });
       groups.forEach(seedOrbits);
-      flights = nodes.current.slice(0, canvas.width <= 540 ? 4 : 6).map((node, i) => ({
+      flights = nodes.current.slice(0, canvas.width <= 540 ? 3 : 5).map((node, i) => ({
         path: spawn(),
         delay: i * 0.9,
         width: node?.offsetWidth || 240,
@@ -137,8 +161,25 @@ export function SpaceSimulation() {
           }
         });
         const active = flights.filter((flight) => flight.delay <= 0 && flight.path.duration === Infinity);
+        ufos.forEach((ufo) => {
+          if (ufo.delay > 0) { ufo.delay -= PHYSICS_STEP; return; }
+          if (ufo.age > 24 || ufo.body.x < -350 || ufo.body.x > canvas.width + 350 || ufo.body.y < cameraY - 350 || ufo.body.y > cameraY + canvas.height + 350) {
+            restartUfo(ufo); return;
+          }
+          steerUfo(ufo, PHYSICS_STEP, canvas.width, canvas.height, cameraY, hole);
+          if (missiles.length < 8) {
+            const missile = fireAntimatter(ufo, hole);
+            if (missile) missiles.push(missile);
+          }
+        });
+        for (const missile of missiles) if (stepAntimatter(missile, hole, PHYSICS_STEP)) {
+          missileHits++;
+          lastMissileHit = elapsed;
+        }
+        missiles = missiles.filter((missile) => missile.age < (missile.hit ? .4 : 3));
+        const liveUfos = ufos.filter((ufo) => ufo.delay <= 0);
         const livePlanets = planets.filter((planet) => planet.delay <= 0);
-        const bodies = [...livePlanets.map((p) => p.body), ...active.map((f) => f.path.body)];
+        const bodies = [...livePlanets.map((p) => p.body), ...active.map((f) => f.path.body), ...liveUfos.map((ufo) => ufo.body)];
         const starts = hole.strength > 0 ? bodies.map((body) => ({ x: body.x, y: body.y })) : [];
         if (hole.strength > 0) bodies.forEach((body) => pullIntoHole(body, hole, PHYSICS_STEP));
         stepGravity(bodies, PHYSICS_STEP);
@@ -149,7 +190,8 @@ export function SpaceSimulation() {
           const planet = livePlanets[i];
           shed(body, planet ? 18 : 8, planet?.color ?? "#ff9e60");
           if (planet) planet.delay = 6 + Math.random() * 4;
-          else active[i - livePlanets.length].path.duration = active[i - livePlanets.length].path.age;
+          else if (i < livePlanets.length + active.length) active[i - livePlanets.length].path.duration = active[i - livePlanets.length].path.age;
+          else restartUfo(liveUfos[i - livePlanets.length - active.length]);
         });
         flights.forEach((flight) => {
           if (flight.delay > 0) { flight.delay -= PHYSICS_STEP; return; }
@@ -172,6 +214,22 @@ export function SpaceSimulation() {
       }
       // Layout is stable between scroll/resize events: don't measure 15 elements every frame.
       if (anchorsDirty) {
+        if (textChanged) {
+          const previousText = new Map(textNodes.map((text) => [text.node, text]));
+          textNodes = [...scene.querySelectorAll<HTMLElement>("[data-hole-text]")].map((node) =>
+            previousText.get(node) ?? { node, x: 0, y: 0, tx: 0, ty: 0, scale: 1, transform: "" });
+          textChanged = false;
+        }
+        textNodes.forEach((text) => {
+          const rect = text.node.getBoundingClientRect();
+          text.x = rect.x + rect.width / 2 - text.tx;
+          text.y = rect.y + rect.height / 2 - text.ty + cameraY;
+        });
+        if (avatar) {
+          const rect = avatar.getBoundingClientRect();
+          faceX = rect.x + rect.width * .49;
+          faceY = rect.y + rect.height * .39 + cameraY;
+        }
         planets.forEach((planet) => {
           const rect = planet.node.getBoundingClientRect();
           planet.anchorX = rect.x + rect.width / 2 - planet.tx;
@@ -179,10 +237,28 @@ export function SpaceSimulation() {
         });
         anchorsDirty = false;
       }
+      const easing = 1 - Math.exp(-dt * 12);
+      textNodes.forEach((text) => {
+        const target = textBulge(hole, text.x, text.y);
+        text.tx += (target.x - text.tx) * easing;
+        text.ty += (target.y - text.ty) * easing;
+        text.scale += (target.scale - text.scale) * easing;
+        const transform = Math.abs(text.tx) + Math.abs(text.ty) < .05 && text.scale < 1.0005 ? ""
+          : `translate(${text.tx.toFixed(2)}px, ${text.ty.toFixed(2)}px) scale(${text.scale.toFixed(3)})`;
+        if (transform !== text.transform) { text.node.style.transform = transform; text.transform = transform; }
+      });
+      if (avatar) {
+        const reaction = avatarReaction(hole, faceX, faceY, avatar.dataset.holeMood === "worried");
+        if (reaction.mood) {
+          if (avatar.dataset.holeMood !== reaction.mood) avatar.dataset.holeMood = reaction.mood;
+        } else if (avatar.dataset.holeMood) delete avatar.dataset.holeMood;
+        const gaze = `translate(${reaction.x} ${reaction.y})`;
+        if (gaze !== lastGaze) { pupils?.forEach((pupil) => pupil.setAttribute("transform", gaze)); lastGaze = gaze; }
+      }
       planets.forEach((planet) => {
         const { x, y } = planet.body;
         const r = planet.radius;
-        const tide = tidalShape(planet.body, hole);
+        const tide = tidalShape(planet.body, hole, planet.diameter / 2);
         if (!planet.disrupted && planet.delay <= 0 && tide.amount > .18) {
           planet.disrupted = disrupt(planet.body, planet.source, planet.diameter);
           planet.disruptedAt = elapsed;
@@ -206,6 +282,13 @@ export function SpaceSimulation() {
       context.clearRect(0, 0, canvas.width, canvas.height);
       context.save();
       context.translate(0, -cameraY);
+      for (const missile of missiles) drawAntimatter(context, missile, elapsed);
+      for (const ufo of ufos) {
+        if (ufo.delay > 0 || ufo.body.x < -100 || ufo.body.x > canvas.width + 100 || ufo.body.y < cameraY - 100 || ufo.body.y > cameraY + canvas.height + 100) continue;
+        // One cached atlas, shared by every visitor; no additional animation loop.
+        if (ufoAtlas === undefined) ufoAtlas = createUfoAtlas();
+        if (ufoAtlas) drawUfo(context, ufoAtlas, ufo, elapsed, canvas.width);
+      }
       let visibleFlights = 0;
       nodes.current.forEach((node, i) => {
         const flight = flights[i];
@@ -257,14 +340,26 @@ export function SpaceSimulation() {
       if (scene.dataset.blackHoleActive !== cursorActive) scene.dataset.blackHoleActive = cursorActive;
       holeCanvas.style.opacity = String(hole.strength);
       if (hole.strength > 0) {
+        const damageAge = elapsed - lastMissileHit;
+        const recoil = Math.max(0, 1 - damageAge / .45);
+        const kickX = recoil > 0 ? Math.round(Math.sin(damageAge * 45) * recoil * 5) : 0;
+        const kickY = recoil > 0 ? Math.round(Math.cos(damageAge * 36) * recoil * 3) : 0;
         displayedRadius += ((hole.radius ?? START_RADIUS) - displayedRadius) * (1 - Math.exp(-dt * 7));
-        holeCanvas.style.transform = `translate3d(${pointerX - HOLE_WIDTH}px, ${pointerY - HOLE_HEIGHT}px, 0) scale(${displayedRadius / HORIZON * (.6 + hole.strength * .4)})`;
+        holeCanvas.style.transform = `translate3d(${pointerX - HOLE_WIDTH + kickX}px, ${pointerY - HOLE_HEIGHT + kickY}px, 0) scale(${displayedRadius / HORIZON * (.6 + hole.strength * .4)})`;
         const frame = Math.floor(elapsed * 12) % holeFrames.length;
-        if (frame !== lastHoleFrame) { holeContext.putImageData(holeFrames[frame], 0, 0); lastHoleFrame = frame; }
+        const damageFrame = damageAge < .7 ? Math.floor(damageAge * 18) : -1;
+        if (frame !== lastHoleFrame || damageFrame !== lastDamageFrame) {
+          holeContext.putImageData(holeFrames[frame], 0, 0);
+          drawBlackHoleDamage(holeContext, damageAge);
+          lastHoleFrame = frame; lastDamageFrame = damageFrame;
+        }
       }
       if (now - lastDiagnostic >= 250) {
         canvas.dataset.frame = now.toFixed(1);
-        canvas.dataset.gravityBodies = String(planets.length + visibleFlights);
+        canvas.dataset.gravityBodies = String(planets.length + visibleFlights + ufos.filter((ufo) => ufo.delay <= 0).length);
+        canvas.dataset.ufoCount = String(ufos.length);
+        canvas.dataset.cometCount = String(flights.length);
+        canvas.dataset.antimatterHits = String(missileHits);
         canvas.dataset.blackHoleCaptures = String(captures);
         canvas.dataset.blackHoleRadius = String(hole.radius);
         lastDiagnostic = now;
@@ -279,6 +374,8 @@ export function SpaceSimulation() {
         hole.strength = 0;
         holeCanvas.style.opacity = "0";
         delete scene.dataset.blackHoleActive;
+        if (avatar) delete avatar.dataset.holeMood;
+        restoreText();
       }
       if (!reduced.matches && !document.hidden)
         request = requestAnimationFrame(tick);
@@ -298,6 +395,11 @@ export function SpaceSimulation() {
     const pointerOut = (event: PointerEvent) => { if (!event.relatedTarget) pointerLeft(); };
     const layoutObserver = new ResizeObserver(() => { anchorsDirty = true; worldHeight = scene.offsetHeight; });
     layoutObserver.observe(scene);
+    const textObserver = new MutationObserver(() => { textChanged = true; anchorsDirty = true; });
+    textObserver.observe(scene, { childList: true, subtree: true, characterData: true });
+    const textLayoutChanged = () => { anchorsDirty = true; };
+    scene.addEventListener("animationend", textLayoutChanged);
+    document.fonts?.addEventListener("loadingdone", textLayoutChanged);
     const motionChanged = () => { reset(); sync(); };
     sync();
     document.addEventListener("visibilitychange", sync);
@@ -317,9 +419,14 @@ export function SpaceSimulation() {
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", moved);
       layoutObserver.disconnect();
+      textObserver.disconnect();
+      scene.removeEventListener("animationend", textLayoutChanged);
+      document.fonts?.removeEventListener("loadingdone", textLayoutChanged);
+      restoreText();
       planets.forEach(({ node }) => { node.style.translate = ""; node.style.visibility = ""; node.style.transform = ""; node.style.opacity = ""; });
       delete scene.dataset.gravityActive;
       delete scene.dataset.blackHoleActive;
+      if (avatar) delete avatar.dataset.holeMood;
     };
   }, []);
 
@@ -328,7 +435,7 @@ export function SpaceSimulation() {
     <div className={styles.layer} aria-hidden="true">
       <link rel="preload" as="image" href="/space/comet-pixel.webp" />
       <canvas ref={canvasRef} className={styles.fire} data-comet-fire />
-      {[0, 1, 2, 3, 4, 5].map((i) => (
+      {[0, 1, 2, 3, 4].map((i) => (
         <span
           key={i}
           ref={(node) => {

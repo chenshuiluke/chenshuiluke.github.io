@@ -14,6 +14,15 @@
   pointer-events: none;
 }
 
+.scene [data-hole-text] {
+  display: inline-block;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene [data-hole-text] { transform: none !important; }
+}
+
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .scene[data-black-hole-active="true"],
   .scene[data-black-hole-active="true"] * {

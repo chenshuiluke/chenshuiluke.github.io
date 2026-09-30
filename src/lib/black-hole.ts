@@ -7,18 +7,82 @@ export const MAX_RADIUS = 26;
 export const HOLE_WIDTH = 96;
 export const HOLE_HEIGHT = 72;
 
-export function growBlackHole(hole: BlackHole, mass: number) {
-  hole.radius = Math.min(MAX_RADIUS, (hole.radius ?? START_RADIUS) + Math.max(.65, Math.cbrt(Math.max(0, mass)) * .32));
+export function textBulge(hole: BlackHole, x: number, y: number) {
+  if (hole.strength <= 0) return { x: 0, y: 0, scale: 1 };
+  const dx = hole.x - x, dy = hole.y - y, distance = Math.hypot(dx, dy);
+  const amount = Math.max(0, 1 - distance / 240) ** 2 * hole.strength;
+  return { x: dx / (distance + 40) * amount * 7, y: dy / (distance + 40) * amount * 7, scale: 1 + amount * .055 };
 }
 
-// Artistic gravity: softened acceleration plus tidal drag creates a rapid inspiral.
+export function growBlackHole(hole: BlackHole, mass: number) {
+  hole.radius = Math.min(MAX_RADIUS, (hole.radius ?? START_RADIUS) + Math.max(1.2, Math.cbrt(Math.max(0, mass)) * .55));
+}
+
+export type AntimatterMissile = { body: GravityBody; age: number; hit: boolean };
+
+// Missiles are powered projectiles, not gravity sources or edible mass.
+export function stepAntimatter(missile: AntimatterMissile, hole: BlackHole, dt: number) {
+  missile.age += dt;
+  if (missile.hit) return false;
+  const { body } = missile;
+  const { x, y } = body;
+  if (hole.strength > .2) {
+    const dx = hole.x - x, dy = hole.y - y, distance = Math.hypot(dx, dy) || 1;
+    const turn = 1 - Math.exp(-dt * 9);
+    body.vx += (dx / distance * 800 - body.vx) * turn;
+    body.vy += (dy / distance * 800 - body.vy) * turn;
+    pullIntoHole(body, hole, dt);
+  }
+  body.x += body.vx * dt;
+  body.y += body.vy * dt;
+  if (!crossedHorizon(x, y, body, hole)) return false;
+  hole.radius = Math.max(4, (hole.radius ?? START_RADIUS) * .72);
+  missile.hit = true;
+  missile.age = 0;
+  body.x = hole.x; body.y = hole.y;
+  return true;
+}
+
+// Brief, local hit feedback on the existing tiny cursor canvas; no full-screen flash.
+export function drawBlackHoleDamage(context: CanvasRenderingContext2D, age: number) {
+  if (age < 0 || age >= .7) return;
+  const fade = 1 - age / .7;
+  context.save();
+  context.globalAlpha = fade;
+  // Broken cyan/violet lensing arcs and pieces blasted out of the accretion disk.
+  for (let i = 0; i < 24; i++) {
+    const angle = i * Math.PI / 12 + age * 2;
+    const radius = i % 3 ? 13 + age * 9 : 18 + age * 22;
+    const x = Math.round(HOLE_WIDTH / 2 + Math.cos(angle) * radius);
+    const y = Math.round(HOLE_HEIGHT / 2 + Math.sin(angle) * radius * .8);
+    context.fillStyle = i % 2 ? "#99f4ff" : "#d18bff";
+    context.fillRect(x, y, i % 3 ? 2 : 3, 2);
+  }
+  // Stepped energy fissures briefly cut through the dark core, then heal.
+  context.globalAlpha = fade * fade;
+  context.fillStyle = age < .12 ? "#f1ffff" : "#b2a1ff";
+  for (let i = 0; i < 7; i++) {
+    context.fillRect(43 + (i % 3) * 2, 26 + i * 3, 3, 4);
+    if (i > 2 && i < 6) context.fillRect(46 + i, 29 + i * 2, 4, 2);
+  }
+  // Dark gaps make the normally continuous disk appear disrupted on impact.
+  context.globalAlpha = fade * .85;
+  context.fillStyle = "#090816";
+  context.fillRect(18, 42, 5, 3); context.fillRect(66, 26, 7, 3);
+  context.restore();
+}
+
+// Local artistic gravity: flybys retain momentum; capture requires a close approach.
 // This is a visual interaction, not a relativistic black-hole solver.
 export function pullIntoHole(body: GravityBody, hole: BlackHole, dt: number) {
   if (hole.strength <= 0) return;
   const dx = hole.x - body.x, dy = hole.y - body.y;
   const distance = Math.hypot(dx, dy);
-  const force = 90_000_000 * hole.strength * (hole.radius ?? HORIZON) / HORIZON / (distance * distance + 40 ** 2) ** 1.5;
-  const drag = Math.exp(-Math.max(0, 1 - distance / 240) * 5 * hole.strength * dt);
+  const radius = hole.radius ?? HORIZON;
+  const falloff = Math.max(0, 1 - distance / (320 + radius * 4));
+  if (falloff === 0) return;
+  const force = 60_000_000 * falloff * hole.strength * radius / HORIZON / (distance * distance + 40 ** 2) ** 1.5;
+  const drag = Math.exp(-Math.max(0, 1 - distance / 120) * 1.8 * hole.strength * dt);
   body.vx = (body.vx + dx * force * dt) * drag;
   body.vy = (body.vy + dy * force * dt) * drag;
   const speed = Math.hypot(body.vx, body.vy);
@@ -34,10 +98,11 @@ export function crossedHorizon(x: number, y: number, body: GravityBody, hole: Bl
   return Math.hypot(x + dx * t - hole.x, y + dy * t - hole.y) < (hole.radius ?? HORIZON);
 }
 
-export function tidalShape(body: GravityBody, hole: BlackHole) {
+export function tidalShape(body: GravityBody, hole: BlackHole, bodyRadius = 0) {
   const dx = hole.x - body.x, dy = hole.y - body.y;
-  const distance = Math.hypot(dx, dy);
-  const amount = Math.max(0, 1 - distance / (150 + (hole.radius ?? HORIZON) * 5)) * hole.strength;
+  const distance = Math.max(0, Math.hypot(dx, dy) - bodyRadius);
+  const radius = hole.radius ?? HORIZON;
+  const amount = Math.max(0, 1 - Math.max(0, distance - radius) / (65 + radius * 2)) * hole.strength;
   return {
     amount,
     angle: Math.atan2(dy, dx) * 180 / Math.PI,
@@ -60,14 +125,16 @@ export type TidalStream = {
   fragments: (GravityBody & { swallowed: boolean })[];
   diameter: number;
   age: number;
+  angle: number;
 };
 
 export function createTidalStream(body: GravityBody, hole: BlackHole, diameter: number): TidalStream {
   const angle = Math.atan2(hole.y - body.y, hole.x - body.x);
-  return { diameter, age: 0, fragments: Array.from({ length: 12 }, (_, i) => {
-    const offset = ((i + .5) / 12 - .5) * diameter;
+  const distance = Math.hypot(hole.x - body.x, hole.y - body.y);
+  return { diameter, age: 0, angle, fragments: Array.from({ length: 16 }, (_, i) => {
+    const offset = ((i + .5) / 16 - .5) * diameter;
     return { x: body.x + Math.cos(angle) * offset, y: body.y + Math.sin(angle) * offset,
-      vx: body.vx, vy: body.vy, mass: 0, swallowed: false };
+      vx: body.vx, vy: body.vy, mass: 0, swallowed: hole.strength > .2 && offset >= distance - (hole.radius ?? HORIZON) };
   }) };
 }
 
@@ -83,8 +150,8 @@ export function stepTidalStream(stream: TidalStream, hole: BlackHole, dt: number
   }
 }
 
-// Each textured strip follows its own trajectory: the nearer hemisphere falls
-// faster, thinning the stream rather than stretching a whole sprite uniformly.
+// Join living slices at their midpoints, then taper small texture segments along
+// that centerline. A swallowed neighbor ends at the hole, never its stale position.
 export function drawTidalStream(context: CanvasRenderingContext2D, image: HTMLCanvasElement, stream: TidalStream, hole: BlackHole) {
   const { fragments, diameter, age } = stream;
   const baseWidth = diameter / fragments.length;
@@ -92,20 +159,35 @@ export function drawTidalStream(context: CanvasRenderingContext2D, image: HTMLCa
   context.imageSmoothingEnabled = false;
   fragments.forEach((fragment, i) => {
     if (fragment.swallowed) return;
-    const neighbor = fragments[i + 1] ?? fragments[i - 1];
-    const direction = i + 1 < fragments.length ? 1 : -1;
-    const dx = (neighbor.x - fragment.x) * direction, dy = (neighbor.y - fragment.y) * direction;
-    const width = Math.max(baseWidth, Math.min(baseWidth * 12, Math.hypot(dx, dy) + 1));
-    const height = Math.max(2, diameter * baseWidth / width);
-    const distance = Math.hypot(fragment.x - hole.x, fragment.y - hole.y);
-    const fade = hole.strength > 0 ? Math.max(0, Math.min(1, (distance - (hole.radius ?? HORIZON)) / 18)) : 1;
-    context.save();
-    context.globalAlpha = Math.max(0, Math.min(1, (4 - age) * 2)) * fade;
-    context.translate(Math.round(fragment.x), Math.round(fragment.y));
-    context.rotate(Math.atan2(dy, dx));
-    context.drawImage(image, i * image.width / fragments.length, 0, image.width / fragments.length, image.height,
-      -width / 2, -height / 2, width, height);
-    context.restore();
+    const previous = fragments[i - 1], next = fragments[i + 1];
+    const forward = next && !next.swallowed ? Math.atan2(next.y - fragment.y, next.x - fragment.x)
+      : hole.strength > .2 ? Math.atan2(hole.y - fragment.y, hole.x - fragment.x) : stream.angle;
+    const leftX = previous && !previous.swallowed ? (previous.x + fragment.x) / 2 : fragment.x - Math.cos(forward) * baseWidth / 2;
+    const leftY = previous && !previous.swallowed ? (previous.y + fragment.y) / 2 : fragment.y - Math.sin(forward) * baseWidth / 2;
+    let rightX = next && !next.swallowed ? (next.x + fragment.x) / 2 : fragment.x + Math.cos(forward) * baseWidth / 2;
+    let rightY = next && !next.swallowed ? (next.y + fragment.y) / 2 : fragment.y + Math.sin(forward) * baseWidth / 2;
+    if (next?.swallowed && hole.strength > .2) { rightX = hole.x; rightY = hole.y; }
+    const dx = rightX - leftX, dy = rightY - leftY, length = Math.hypot(dx, dy);
+    // Don't bridge widely separated debris with giant bars of stretched terrain.
+    if (length < .1 || length > baseWidth * 6) return;
+    const stretch = Math.max(1, length / baseWidth);
+    for (let part = 0; part < 4; part++) {
+      const t = (part + .5) / 4;
+      const x = leftX + dx * t, y = leftY + dy * t;
+      const distance = Math.hypot(x - hole.x, y - hole.y);
+      const clearance = distance - (hole.radius ?? HORIZON);
+      if (hole.strength > .2 && clearance <= 0) continue;
+      const taper = hole.strength > .2 ? Math.min(1, Math.max(0, clearance) / Math.max(30, diameter * .65)) : 1;
+      const height = diameter / stretch * taper;
+      const fade = hole.strength > .2 ? Math.min(1, Math.max(0, clearance) / 12) : 1;
+      context.save();
+      context.globalAlpha = Math.max(0, Math.min(1, (4 - age) * 2)) * fade;
+      context.translate(Math.round(x), Math.round(y));
+      context.rotate(Math.atan2(dy, dx));
+      context.drawImage(image, (i + part / 4) * image.width / fragments.length, 0, image.width / fragments.length / 4, image.height,
+        -length / 8 - .35, -height / 2, length / 4 + .7, height);
+      context.restore();
+    }
   });
   context.restore();
 }

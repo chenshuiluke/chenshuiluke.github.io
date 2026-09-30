@@ -54,7 +54,7 @@
   opacity: 0;
 }
 @media (max-width: 540px) {
-  .comet:nth-of-type(n + 5) {
+  .comet:nth-of-type(n + 4) {
     display: none;
   }
 }

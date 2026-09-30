@@ -330,7 +330,7 @@ let simulationRefs = 0;
 const simulatedUfos = [];
 const missileLaunches = [];
 let simulationNow = 0;
-const pointerMedia = { matches: false };
+const pointerMedia = { matches: true };
 let body;
 const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
   react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : initial }) },
@@ -363,7 +363,16 @@ const advance = (now) => {
   frames.delete(id);
   callback(now);
 };
+const cursorPosition = () => {
+  const [, x, y] = holeCanvas.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px/);
+  return [Number(x) + blackHole.HOLE_WIDTH, Number(y) + blackHole.HOLE_HEIGHT];
+};
 advance(1000);
+assert.equal(holeCanvas.style.opacity, "1", "Mobile black holes appear on the very first frame");
+const mobileStart = cursorPosition();
+advance(1010);
+assert.notDeepEqual(cursorPosition(), mobileStart, "Mobile wandering starts immediately without an idle delay");
+pointerMedia.matches = false;
 assert.equal(fireCanvas.dataset.ufoCount, "1", "Mobile keeps a single UFO");
 body.x = -1000;
 advance(1020);
@@ -412,10 +421,16 @@ for (let now = 1400; now <= 12500; now += 100) advance(now);
 assert(gravitySteps > stepsAtCapture, "Captured planets are replenished after their cooldown");
 pointerMedia.matches = true;
 advance(12600); advance(12900); advance(13200); advance(13500); advance(13800);
-assert(Number(holeCanvas.style.opacity) > 0, "Coarse-pointer devices spawn a black hole automatically");
+assert.equal(holeCanvas.style.opacity, "1", "Coarse-pointer devices keep the black hole fully visible");
 assert.equal(scene.dataset.blackHoleActive, "false", "Mobile never hides a native cursor");
-for (let now = 13900; now <= 22000; now += 100) advance(now);
-assert.equal(holeCanvas.style.opacity, "0", "Mobile bursts end instead of permanently covering content");
+const mobileWanderStart = cursorPosition();
+listeners.get("pointerout")({ relatedTarget: null });
+assert.equal(holeCanvas.style.opacity, "1", "Touch pointer-out events don't hide the mobile black hole");
+for (let now = 13900; now <= 22000; now += 100) {
+  advance(now);
+  assert.equal(holeCanvas.style.opacity, "1", "Mobile wandering never fades out or enters a quiet period");
+}
+assert.notDeepEqual(cursorPosition(), mobileWanderStart, "Mobile keeps wandering across multiple targets");
 pointerMedia.matches = false;
 const pilot = simulatedUfos[0];
 Object.assign(pilot, { age: 0, delay: 0, weaponCooldown: 0 });
@@ -448,10 +463,6 @@ for (let i = 1; i < fleetLaunches.length; i++)
 // Idle wandering uses the same position for rendering and gravity, without a new loop.
 fleet.forEach((ufo) => { ufo.delay = 100; });
 listeners.get("pointermove")({ pointerType: "mouse", clientX: 600, clientY: 400 });
-const cursorPosition = () => {
-  const [, x, y] = holeCanvas.style.transform.match(/translate3d\(([-\d.]+)px, ([-\d.]+)px/);
-  return [Number(x) + blackHole.HOLE_WIDTH, Number(y) + blackHole.HOLE_HEIGHT];
-};
 for (let now = 39500; now <= 43300; now += 100) advance(now);
 assert.deepEqual(cursorPosition(), [600, 400], "Cursor stays put during the four-second idle delay");
 const readsBeforeDrift = textReads;
@@ -474,6 +485,12 @@ assert.deepEqual(cursorPosition(), [610, 410], "Moving the cursor restarts the i
 listeners.get("pointerout")({ relatedTarget: null });
 for (let now = 54600; now <= 57500; now += 100) advance(now);
 assert.equal(holeCanvas.style.opacity, "0", "Leaving the page disables idle wandering");
+pointerMedia.matches = true;
+document.documentElement.clientWidth = 390;
+listeners.get("resize")();
+advance(57600);
+assert(cursorPosition()[0] >= 0 && cursorPosition()[0] <= 390, "A narrower mobile viewport keeps the wandering hole on screen");
+assert.equal(holeCanvas.style.opacity, "1");
 document.hidden = true;
 listeners.get("visibilitychange")();
 assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");
@@ -481,9 +498,12 @@ assert.equal(holeCanvas.style.opacity, "0");
 assert.equal(nextWord.style.transform, "", "Hidden tabs restore undistorted text");
 document.hidden = false;
 listeners.get("visibilitychange")();
+advance(57700);
+assert.equal(holeCanvas.style.opacity, "1", "Mobile wandering resumes as soon as the page is visible again");
 motion.matches = true;
 listeners.get("change")();
 assert.equal(frames.size, 0, "Reduced motion disables black holes");
+assert.equal(holeCanvas.style.opacity, "0", "Continuous mobile wandering still respects reduced motion");
 assert.equal(planetStyle.transform, "", "Reduced motion restores unstretched planets");
 motion.matches = false;
 cleanupSimulation();

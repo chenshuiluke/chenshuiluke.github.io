@@ -45,9 +45,11 @@ export function SpaceSimulation() {
       paintBlackHole(frame.data, i / 16);
       return frame;
     });
-    let mouseInside = false, pointerX = 0, pointerY = 0;
+    let mouseInside = false;
+    let pointerX = coarse.matches ? document.documentElement.clientWidth * .65 : 0;
+    let pointerY = coarse.matches ? innerHeight * .4 : 0;
     let lastPointerMove = 0, nextDriftTarget = 0, driftX = 0, driftY = 0;
-    let elapsed = 0, nextHole = 2, holeBorn = 0, holeUntil = 0, lastHoleFrame = -1;
+    let elapsed = 0, lastHoleFrame = -1;
     let captures = 0, lastDebris = 0;
     const debris: (GravityBody & { life: number; color: string; size: number })[] = [];
     let streams: { effect: TidalStream; image: HTMLCanvasElement }[] = [];
@@ -139,15 +141,8 @@ export function SpaceSimulation() {
       accumulated += dt;
       elapsed += dt;
       previous = now;
-      if (coarse.matches && elapsed >= nextHole) {
-        pointerX = canvas.width * (.18 + Math.random() * .64);
-        pointerY = canvas.height * (.2 + Math.random() * .6);
-        holeBorn = elapsed;
-        holeUntil = elapsed + 7;
-        nextHole = holeUntil + 5 + Math.random() * 3;
-      }
-      const idle = elapsed - lastPointerMove - 4;
-      if (!coarse.matches && mouseInside && idle > 0) {
+      const idle = coarse.matches ? 1 : elapsed - lastPointerMove - 4;
+      if (coarse.matches || (mouseInside && idle > 0)) {
         if (elapsed >= nextDriftTarget) {
           driftX = canvas.width * (.15 + Math.random() * .7);
           driftY = canvas.height * (.15 + Math.random() * .7);
@@ -161,7 +156,7 @@ export function SpaceSimulation() {
       }
       hole.x = pointerX;
       hole.y = pointerY + cameraY;
-      hole.strength = coarse.matches ? Math.max(0, Math.min(1, (elapsed - holeBorn) * 2, (holeUntil - elapsed) * 2)) : Number(mouseInside);
+      hole.strength = Number(coarse.matches || mouseInside);
       while (accumulated >= PHYSICS_STEP) {
         streams.forEach(({ effect }) => stepTidalStream(effect, hole, PHYSICS_STEP));
         planets.forEach((planet) => {
@@ -403,6 +398,11 @@ export function SpaceSimulation() {
       // Mobile browser chrome changes height while scrolling: don't restart the universe.
       if (canvas.width !== document.documentElement.clientWidth) reset();
       canvas.height = innerHeight;
+      if (coarse.matches) {
+        pointerX = Math.max(canvas.width * .15, Math.min(canvas.width * .85, pointerX));
+        pointerY = Math.max(canvas.height * .15, Math.min(canvas.height * .85, pointerY));
+        nextDriftTarget = 0;
+      }
       anchorsDirty = true;
     };
     const moved = () => { cameraY = scrollY; anchorsDirty = true; };
@@ -413,7 +413,7 @@ export function SpaceSimulation() {
       nextDriftTarget = 0;
     };
     const pointerLeft = () => { mouseInside = false; holeCanvas.style.opacity = "0"; delete scene.dataset.blackHoleActive; };
-    const pointerOut = (event: PointerEvent) => { if (!event.relatedTarget) pointerLeft(); };
+    const pointerOut = (event: PointerEvent) => { if (!coarse.matches && !event.relatedTarget) pointerLeft(); };
     const layoutObserver = new ResizeObserver(() => { anchorsDirty = true; worldHeight = scene.offsetHeight; });
     layoutObserver.observe(scene);
     const textObserver = new MutationObserver(() => { textChanged = true; anchorsDirty = true; });

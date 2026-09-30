@@ -27,16 +27,23 @@ export function stepAntimatter(missile: AntimatterMissile, hole: BlackHole, dt: 
   const { body } = missile;
   const { x, y } = body;
   if (hole.strength > .2) {
-    const dx = hole.x - x, dy = hole.y - y, distance = Math.hypot(dx, dy) || 1;
-    const turn = 1 - Math.exp(-dt * 9);
-    body.vx += (dx / distance * 800 - body.vx) * turn;
-    body.vy += (dy / distance * 800 - body.vy) * turn;
+    const heading = Math.atan2(body.vy, body.vx);
+    const aim = Math.atan2(hole.y - y, hole.x - x) - heading;
+    const error = Math.atan2(Math.sin(aim), Math.cos(aim));
+    // Brief, forward-facing guidance with a 60-degree/second turn limit.
+    // A sharp dodge or overshoot leaves a ballistic projectile, not a U-turn.
+    if (missile.age < 1 && Math.abs(error) < Math.PI / 3) {
+      const turn = Math.max(-Math.PI / 3 * dt, Math.min(Math.PI / 3 * dt, error));
+      const speed = Math.min(800, Math.hypot(body.vx, body.vy) + 400 * dt);
+      body.vx = Math.cos(heading + turn) * speed;
+      body.vy = Math.sin(heading + turn) * speed;
+    }
     pullIntoHole(body, hole, dt);
   }
   body.x += body.vx * dt;
   body.y += body.vy * dt;
   if (!crossedHorizon(x, y, body, hole)) return false;
-  hole.radius = Math.max(4, (hole.radius ?? START_RADIUS) * .72);
+  hole.radius = Math.max(4, (hole.radius ?? START_RADIUS) * .92);
   missile.hit = true;
   missile.age = 0;
   body.x = hole.x; body.y = hole.y;

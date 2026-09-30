@@ -12,14 +12,37 @@ assert.equal(fireAntimatter(gunner, { ...target, strength: 0 }), null);
 const missile = fireAntimatter(gunner, target);
 assert(missile, "Active nearby holes can be targeted");
 assert.equal(fireAntimatter(gunner, target), null, "Cooldown prevents spam");
+for (let i = 0; i < 7 * 120; i++) {
+  steerUfo(gunner, PHYSICS_STEP, 1440, 844, 0, target, () => .5);
+  assert.equal(fireAntimatter(gunner, target), null, "Pilots cannot fire again during the first seven seconds");
+}
+steerUfo(gunner, 1.1, 1440, 844, 0, target, () => .5);
+assert(fireAntimatter(gunner, target), "Individual weapons eventually recharge");
 let hits = 0;
 for (let i = 0; i < 360; i++) {
   if (i < 15) target.y += 1;
   if (stepAntimatter(missile, target, PHYSICS_STEP)) hits++;
 }
 assert.equal(hits, 1, "Homing missile hits a moving hole exactly once");
-assert.equal(target.radius, 26 * .72, "Impact shrinks the hole and therefore weakens its pull");
-for (let i = 0; i < 20; i++) stepAntimatter({ body: { x: target.x, y: target.y, vx: 0, vy: 0, mass: 0 }, age: 0, hit: false }, target, PHYSICS_STEP);
+assert.equal(target.radius, 26 * .92, "Impact removes only eight percent of the hole's radius");
+const turning = { body: { x: 0, y: 0, vx: 600, vy: 0, mass: 0 }, age: 0, hit: false };
+stepAntimatter(turning, { x: 1000, y: 1000, strength: 1, radius: 9 }, .1);
+assert(Math.abs(Math.atan2(turning.body.vy, turning.body.vx) - Math.PI / 30) < 1e-8, "Guidance turns at most six degrees in a tenth of a second");
+const overshot = { body: { x: 0, y: 0, vx: 600, vy: 0, mass: 0 }, age: 0, hit: false };
+stepAntimatter(overshot, { x: -1000, y: 100, strength: 1, radius: 9 }, .1);
+assert.equal(overshot.body.vx, 600); assert.equal(overshot.body.vy, 0, "Missiles don't turn around to chase targets behind them");
+const expiredGuidance = { body: { x: 0, y: 0, vx: 600, vy: 0, mass: 0 }, age: 1, hit: false };
+stepAntimatter(expiredGuidance, { x: 1000, y: 500, strength: 1, radius: 9 }, .1);
+assert.equal(expiredGuidance.body.vy, 0, "After one second the missile stops actively tracking");
+gunner.weaponCooldown = 0;
+const dodgedHole = { x: 0, y: 0, strength: 1, radius: 18 };
+const dodgedMissile = fireAntimatter(gunner, dodgedHole);
+for (let i = 0; i < 360; i++) {
+  if (i === 10) dodgedHole.y = 350;
+  stepAntimatter(dodgedMissile, dodgedHole, PHYSICS_STEP);
+}
+assert(!dodgedMissile.hit && dodgedHole.radius === 18, "A sharp sideways dodge can miss for the entire projectile lifetime");
+for (let i = 0; i < 40; i++) stepAntimatter({ body: { x: target.x, y: target.y, vx: 0, vy: 0, mass: 0 }, age: 0, hit: false }, target, PHYSICS_STEP);
 assert.equal(target.radius, 4, "Repeated hits leave a small, nonzero black hole");
 const lost = { body: { x: 0, y: 0, vx: 600, vy: 0, mass: 0 }, age: 0, hit: false };
 assert.equal(stepAntimatter(lost, { ...target, strength: 0 }, PHYSICS_STEP), false, "Inactive holes cannot take damage");
@@ -87,7 +110,7 @@ for (const radius of [9, 18]) {
   assert(!pilot.boosting);
 }
 
-// Same dangerous approach: thrust alone loses, but a missile can tip the balance.
+// A close approach to a full-size hole stays dangerous even with counterfire.
 for (const armed of [false, true]) {
   const pilot = createUfo(0, 1440, 844, 0, () => .5);
   pilot.delay = 0;
@@ -106,8 +129,8 @@ for (const armed of [false, true]) {
     stepGravity([pilot.body], PHYSICS_STEP);
     if (crossedHorizon(x, y, pilot.body, threat)) { captured = true; break; }
   }
-  assert.equal(captured, !armed, "A full boost is no longer a guaranteed escape from a close approach");
-  if (armed) assert(pilot.body.x > 440 && threat.radius < 26, "Successful counterfire can still enable an escape");
+  assert(captured, "Neither boost nor a single missile guarantees escape from a close approach");
+  if (armed) assert.equal(threat.radius, 26 * .92, "Counterfire chips the hole without neutralizing its pull");
 }
 
 const sprites = [];

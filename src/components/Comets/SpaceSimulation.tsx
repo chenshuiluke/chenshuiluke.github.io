@@ -86,6 +86,7 @@ export function SpaceSimulation() {
     let ufos: Ufo[] = [];
     let missiles: AntimatterMissile[] = [];
     let missileHits = 0;
+    let nextMissileAt = 0;
     let lastMissileHit = -Infinity, lastDamageFrame = -1;
     let ufoAtlas: HTMLCanvasElement | null | undefined;
     const restartUfo = (ufo: Ufo) => {
@@ -167,9 +168,13 @@ export function SpaceSimulation() {
             restartUfo(ufo); return;
           }
           steerUfo(ufo, PHYSICS_STEP, canvas.width, canvas.height, cameraY, hole);
-          if (missiles.length < 8) {
+          if (elapsed >= nextMissileAt && missiles.length < 8) {
             const missile = fireAntimatter(ufo, hole);
-            if (missile) missiles.push(missile);
+            if (missile) {
+              missiles.push(missile);
+              // Shared across pilots and respawns: more aliens don't mean volleys.
+              nextMissileAt = elapsed + 4;
+            }
           }
         });
         for (const missile of missiles) if (stepAntimatter(missile, hole, PHYSICS_STEP)) {

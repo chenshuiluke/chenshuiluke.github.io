@@ -328,12 +328,18 @@ let damageRects = 0;
 const holeCanvas = { style: {}, getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {}, save() {}, restore() {}, fillRect() { damageRects++; } }) };
 let simulationRefs = 0;
 const simulatedUfos = [];
+const missileLaunches = [];
+let simulationNow = 0;
 const pointerMedia = { matches: false };
 let body;
 const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
   react: { useEffect: (fn) => { effect = fn; }, useRef: (initial) => ({ current: initial === null ? (++simulationRefs === 1 ? fireCanvas : holeCanvas) : initial }) },
   "@/lib/black-hole": blackHole,
-  "@/lib/ufos": { ...ufoHelpers, createUfoAtlas: () => null, createUfo: (...args) => {
+  "@/lib/ufos": { ...ufoHelpers, fireAntimatter: (...args) => {
+    const missile = ufoHelpers.fireAntimatter(...args);
+    if (missile) missileLaunches.push(simulationNow);
+    return missile;
+  }, createUfoAtlas: () => null, createUfo: (...args) => {
     const ufo = ufoHelpers.createUfo(...args); simulatedUfos.push(ufo); return ufo;
   } },
   "@/lib/avatar-reaction": { avatarReaction },
@@ -352,6 +358,7 @@ const { SpaceSimulation } = load("src/components/Comets/SpaceSimulation.tsx", {
 SpaceSimulation();
 const cleanupSimulation = effect();
 const advance = (now) => {
+  simulationNow = now;
   const [id, callback] = frames.entries().next().value;
   frames.delete(id);
   callback(now);
@@ -415,9 +422,27 @@ Object.assign(pilot, { age: 0, delay: 0, weaponCooldown: 0 });
 Object.assign(pilot.body, { x: 300, y: globals.scrollY + 200, vx: 0, vy: 0 });
 const hitsBefore = Number(fireCanvas.dataset.antimatterHits), damageBefore = damageRects;
 listeners.get("pointermove")({ pointerType: "mouse", clientX: 100, clientY: 200 });
-for (let now = 22100; now <= 23400; now += 100) advance(now);
+for (let now = 22100; now <= 27400; now += 100) advance(now);
 assert(Number(fireCanvas.dataset.antimatterHits) > hitsBefore, "Shared simulation launches and lands UFO missiles");
 assert(damageRects > damageBefore, "Real missile impacts render damage on the black-hole canvas");
+
+// Keep every pilot armed to isolate the fleet-wide limit from individual cooldowns.
+const launchesBefore = missileLaunches.length;
+document.documentElement.clientWidth = 1440;
+listeners.get("resize")();
+const fleet = simulatedUfos.slice(-2);
+for (let now = 27500; now <= 39400; now += 100) {
+  for (const ufo of fleet) {
+    Object.assign(ufo, { age: 0, delay: 0, weaponCooldown: 0 });
+    Object.assign(ufo.body, { x: 300, y: globals.scrollY + 200, vx: 0, vy: 0 });
+  }
+  advance(now);
+}
+assert.equal(fireCanvas.dataset.ufoCount, "2", "Desktop tests multiple simultaneously armed pilots");
+const fleetLaunches = missileLaunches.slice(launchesBefore - 1);
+assert(fleetLaunches.length >= 3, "The shared cooldown expires and allows later shots");
+for (let i = 1; i < fleetLaunches.length; i++)
+  assert(fleetLaunches[i] - fleetLaunches[i - 1] >= 4000, "All pilots share a four-second launch gap, including across resets");
 document.hidden = true;
 listeners.get("visibilitychange")();
 assert.equal(frames.size, 0, "Hidden tabs stop black-hole work too");

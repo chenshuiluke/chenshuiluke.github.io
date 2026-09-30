@@ -58,7 +58,7 @@ export function steerUfo(ufo: Ufo, dt: number, width: number, height: number, ca
 export function fireAntimatter(ufo: Ufo, hole: BlackHole): AntimatterMissile | null {
   const dx = hole.x - ufo.body.x, dy = hole.y - ufo.body.y, distance = Math.hypot(dx, dy);
   if (ufo.delay > 0 || ufo.weaponCooldown > 0 || hole.strength <= .2 || distance > 600 || distance < (hole.radius ?? 18)) return null;
-  ufo.weaponCooldown = 2.5 + ufo.kind * .25;
+  ufo.weaponCooldown = 8 + ufo.kind * .5;
   return { body: { x: ufo.body.x, y: ufo.body.y, vx: dx / distance * 600, vy: dy / distance * 600, mass: 0 }, age: 0, hit: false };
 }
 

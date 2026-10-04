@@ -1,5 +1,5 @@
 import { ChapterHero } from "@/components/ChapterHero/ChapterHero";
-import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
+import { SpaceSimulation } from "@/components/SpaceSimulation/SpaceSimulation";
 import { DistantPlanet } from "@/components/DistantPlanet/DistantPlanet";
 import { FloatingObject } from "@/components/FloatingObject/FloatingObject";
 import { Hero } from "@/components/Hero/Hero";
@@ -9,9 +9,9 @@ import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";
 import { RecentPosts } from "@/components/RecentPosts/RecentPosts";
 import { Scene } from "@/components/Scene/Scene";
 import { SpaceBackground } from "@/components/SpaceBackground/SpaceBackground";
-import { CrescentMoon } from "@/components/svg/CrescentMoon";
-import { Planet } from "@/components/svg/Planet";
-import { PixelPlanet } from "@/components/svg/PixelPlanet";
+import { CrescentMoon } from "@/components/Svg/CrescentMoon";
+import { Planet } from "@/components/Svg/Planet";
+import { PixelPlanet } from "@/components/Svg/PixelPlanet";
 import { planetMaps } from "@/lib/pixel-planets";
 
 export default function Home() {

@@ -1,4 +1,4 @@
-import { PixelPlanet } from "@/components/svg/PixelPlanet";
+import { PixelPlanet } from "@/components/Svg/PixelPlanet";
 import styles from "./ChapterSky.module.css";
 
 export function ChapterSky({

@@ -1,1 +1,0 @@
-export { DistantPlanet } from "./DistantPlanet";

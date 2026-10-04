@@ -1,4 +1,4 @@
-import { CrescentMoon } from "../svg/CrescentMoon";
+import { CrescentMoon } from "../Svg/CrescentMoon";
 import styles from "./MoonPhase.module.css";
 
 export function MoonPhase() {

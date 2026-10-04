@@ -1,5 +1,5 @@
 import { posts } from "@/content";
-import { PostCard } from "@/components/blog/PostCard";
+import { PostCard } from "@/components/Blog/PostCard";
 import styles from "./blog.module.css";
 import type { Metadata } from "next";
 

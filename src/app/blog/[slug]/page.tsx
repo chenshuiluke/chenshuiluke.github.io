@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { Mdx } from "@/components/blog/Mdx";
-import { TagPill } from "@/components/blog/TagPill";
-import { ReadingProgress } from "@/components/blog/ReadingProgress";
-import { AuthorCard } from "@/components/blog/AuthorCard";
-import { ContinueReading } from "@/components/blog/ContinueReading";
+import { Mdx } from "@/components/Blog/Mdx";
+import { TagPill } from "@/components/Blog/TagPill";
+import { ReadingProgress } from "@/components/Blog/ReadingProgress";
+import { AuthorCard } from "@/components/Blog/AuthorCard";
+import { ContinueReading } from "@/components/Blog/ContinueReading";
 import styles from "../blog.module.css";
 
 const AUTHOR = {

@@ -2,7 +2,7 @@ import { posts } from "@/content";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PostCard } from "@/components/blog/PostCard";
+import { PostCard } from "@/components/Blog/PostCard";
 import styles from "../../blog.module.css";
 
 interface Params {

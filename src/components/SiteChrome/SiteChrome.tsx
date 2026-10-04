@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SpaceSimulation } from "@/components/Comets/SpaceSimulation";
+import { SpaceSimulation } from "@/components/SpaceSimulation/SpaceSimulation";
 import { Footer } from "@/components/Footer/Footer";
 import { Nav } from "@/components/Nav/Nav";
 import { ParallaxStars } from "@/components/ParallaxStars/ParallaxStars";

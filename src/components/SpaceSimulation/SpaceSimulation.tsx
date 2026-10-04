@@ -8,7 +8,7 @@ import {
   paintCometHead, COMET_HEAD_SIZE, COMET_VARIANTS,
   type CometFlight,
 } from "@/lib/comet-flight";
-import styles from "./Comets.module.css";
+import styles from "./SpaceSimulation.module.css";
 import { PHYSICS_STEP, seedOrbits, stepGravity, type GravityBody } from "@/lib/gravity";
 import { createTidalStream, crossedHorizon, drawTidalStream, growBlackHole, HORIZON, HOLE_HEIGHT, HOLE_WIDTH, paintBlackHole, pullIntoHole, respawnPlanet, START_RADIUS, stepTidalStream, tidalShape, type BlackHole, type TidalStream } from "@/lib/black-hole";
 import { createUfo, createUfoAtlas, drawUfo, drawAntimatter, fireAntimatter, steerUfo, type Ufo } from "@/lib/ufos";

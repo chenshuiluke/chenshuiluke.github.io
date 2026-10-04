@@ -1,4 +1,4 @@
-import { Planet } from "../svg/Planet";
+import { Planet } from "../Svg/Planet";
 import styles from "./DistantPlanet.module.css";
 
 export function DistantPlanet() {

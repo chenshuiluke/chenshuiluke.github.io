@@ -26,37 +26,35 @@ export function paintCometHead(pixels: Uint8ClampedArray, variant: number) {
     return n - Math.floor(n);
   };
   const craters = [[-.3, -.25, .29], [.28, .24, .23], [-.3, .4, .16], [.35, -.4, .13]];
+  const turn = variant * 1.3, cos = Math.cos(turn), sin = Math.sin(turn);
   for (let y = 0; y < COMET_HEAD_SIZE; y++) for (let x = 0; x < COMET_HEAD_SIZE; x++) {
     const u = (x - 19.5) / 20, v = (y - 19.5) / 20;
     const angle = Math.atan2(v, u);
-    const rough = .025 * Math.sin(angle * 11 + variant) + .035 * Math.sin(angle * 5);
+    const rough = .018 * Math.sin(angle * 9 + variant) + .045 * Math.sin(angle * 3 + variant * 2);
     let edge: number;
     switch (variant) {
-      case 1: edge = 1 - Math.abs(u + v * .3) / .96 - Math.abs(v) / .61 + rough; break;
+      case 1: edge = .84 - Math.hypot(u * .92 + v * .2, v * 1.4) + rough; break;
       case 2: edge = Math.max(.61 - Math.hypot(u + .31, v - .14), .57 - Math.hypot(u - .34, v + .18)) + rough; break;
-      case 3: edge = Math.max(1 - Math.abs(u + .25) / .53 - Math.abs(v - .18) / .64,
-        1 - Math.abs(u - .08) / .4 - Math.abs(v + .18) / .77,
-        1 - Math.abs(u - .42) / .42 - Math.abs(v - .19) / .57) * .5; break;
-      case 4: edge = .79 - Math.hypot(u * .92, v * 1.08) + .065 * Math.sin(angle * 7) + rough; break;
+      case 3: edge = .84 - Math.hypot(u * 1.18, v * .93) + .045 * Math.cos(angle * 4) + rough; break;
+      case 4: edge = .72 - Math.hypot(u * .98, v * 1.08) + .055 * Math.sin(angle * 5) + rough; break;
       default: edge = .84 - Math.hypot(u, v) + rough;
     }
     if (edge <= 0) continue;
     const grain = noise(x, y), clusters = noise(Math.floor(x / 3), Math.floor(y / 3));
-    let tone = 4.8 + u * 2 - v * 2 + (clusters - .5) * 2 + (grain - .5) * 1.3;
-    if (variant === 1 || variant === 3) {
-      // Broad angular facets with fine mineral flecks, rather than round craters.
-      tone += (Math.sin(u * 13 + v * 5) > 0 ? 1.6 : -1.7);
-      if (Math.abs((u + v * .45 + 1) % .28) < .035) tone += 2;
-    } else {
-      for (const [cx, cy, radius] of craters) {
-        const dx = u - cx, dy = v - cy, d = Math.hypot(dx, dy) / radius;
-        if (d < 1) tone -= 2.5 + dy / radius;
-        else if (d < 1.22) tone += dy < 0 ? 2.4 : -.7;
-      }
-      if (variant === 4 && Math.abs(Math.sin(u * 12 + Math.sin(v * 9)) * Math.cos(v * 10 - u * 4)) < .14) tone = 8 + grain * 2;
+    // A rounded volume and one light direction, not stripes or a glowing outline.
+    const depth = Math.sqrt(Math.min(1, edge * 2.4));
+    const light = Math.max(0, depth * .82 - u * .38 - v * .5);
+    let tone = 1.5 + light * 5.8 + (clusters - .5) * 1.3 + (grain - .5) * .65;
+    for (const [cx, cy, radius] of craters) {
+      const dx = u - (cx * cos - cy * sin), dy = v - (cx * sin + cy * cos);
+      const d = Math.hypot(dx, dy) / radius;
+      if (d < 1) tone -= 2.7 * Math.sqrt(1 - d * d) + (dx + dy) / radius * .45;
+      else if (d < 1.23) tone += dx + dy < 0 ? 1.6 : -.8;
     }
-    if (edge < .075) tone = u > -.2 ? 8 + grain * 2 : 4 + grain * 3;
-    if (grain > .975) tone += 2;
+    if (variant === 4 && Math.abs(u + .2 * Math.sin(v * 7) - .1) < .035) tone -= 1.8;
+    // Small mineral glints and a broken hot rear rim merge into the particle flame.
+    if (edge < .05 && u < -.3 && grain > .45) tone = 7 + grain * 2;
+    if (grain > .985 && light > .6) tone += 1.5;
     const color = palette[Math.max(0, Math.min(palette.length - 1, Math.round(tone)))];
     pixels.set([...color, 255], (y * COMET_HEAD_SIZE + x) * 4);
   }

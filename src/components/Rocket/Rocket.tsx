@@ -1,4 +1,4 @@
-import { PixelSprite } from "../svg/PixelSprite";
+import { PixelSprite } from "../Svg/PixelSprite";
 import styles from "./Rocket.module.css";
 
 export function Rocket() {
